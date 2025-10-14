@@ -30,6 +30,17 @@ request.interceptors.request.use(
     // 添加请求ID
     config.headers['X-Request-ID'] = generateRequestId()
     
+    // 详细日志记录
+    console.log('发送请求:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      baseURL: config.baseURL,
+      fullURL: `${config.baseURL || ''}${config.url}`,
+      headers: config.headers,
+      data: config.data,
+      params: config.params
+    })
+    
     return config
   },
   (error) => {
@@ -41,6 +52,14 @@ request.interceptors.request.use(
 // 响应拦截器
 request.interceptors.response.use(
   (response) => {
+    console.log('收到响应:', {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.config.url,
+      method: response.config.method?.toUpperCase(),
+      data: response.data
+    })
+    
     const { code, message, data } = response.data
     
     // 成功响应

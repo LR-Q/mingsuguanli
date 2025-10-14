@@ -125,7 +125,8 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteCustomer(Long id) {
-        log.info("删除客户: id={}", id);
+        log.info("=== Service开始删除客户: id={}", id);
+        System.out.println("=== Service开始删除客户: id=" + id);
         
         // 查询客户
         SysUser user = userMapper.selectOne(
@@ -135,19 +136,24 @@ public class CustomerServiceImpl implements CustomerService {
                 .eq(SysUser::getDeleted, 0)
         );
         
+        System.out.println("=== 查询到的用户: " + (user != null ? user.getUsername() + ", deleted=" + user.getDeleted() : "null"));
+        
         if (user == null) {
+            System.out.println("=== 用户不存在，抛出异常");
             throw new BusinessException(ResultCode.USER_NOT_FOUND, "客户不存在");
         }
         
-        // 逻辑删除
-        user.setDeleted(1);
-        user.setUpdateTime(LocalDateTime.now());
+        // 逻辑删除 - 使用MyBatis-Plus的逻辑删除
+        System.out.println("=== 开始逻辑删除操作");
+        int updateResult = userMapper.deleteById(id);
+        System.out.println("=== 逻辑删除结果: " + updateResult);
         
-        int updateResult = userMapper.updateById(user);
         if (updateResult <= 0) {
+            System.out.println("=== 更新失败，抛出异常");
             throw new BusinessException(ResultCode.INTERNAL_ERROR, "客户删除失败");
         }
         
+        System.out.println("=== Service删除成功: username=" + user.getUsername());
         log.info("客户删除成功: username={}", user.getUsername());
     }
     

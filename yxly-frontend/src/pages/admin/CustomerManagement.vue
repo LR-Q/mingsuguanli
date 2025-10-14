@@ -299,15 +299,19 @@ const handleToggleStatus = async (row) => {
 // 删除客户
 const handleDelete = async (row) => {
   try {
-    await deleteCustomer(row.id)
+    console.log('开始删除客户:', row.id, row.username)
+    const response = await deleteCustomer(row.id)
+    console.log('删除API响应:', response)
+    
     ElMessage.success('删除成功')
     
     // 重新加载列表
-    getCustomerList()
+    await getCustomerList()
     
   } catch (error) {
-    console.error('删除失败:', error)
-    ElMessage.error('删除失败')
+    console.error('删除失败详细信息:', error)
+    console.error('错误响应:', error.response)
+    ElMessage.error(error.message || '删除失败')
   }
 }
 

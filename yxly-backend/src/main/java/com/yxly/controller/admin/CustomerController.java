@@ -87,9 +87,18 @@ public class CustomerController {
             @Parameter(description = "客户ID") 
             @PathVariable Long id) {
         
-        log.info("管理员删除客户: id={}", id);
+        log.info("=== 收到删除请求 === 客户ID: {}", id);
+        System.out.println("=== 收到删除请求 === 客户ID: " + id);
         
-        customerService.deleteCustomer(id);
-        return Result.success(null, "删除成功");
+        try {
+            customerService.deleteCustomer(id);
+            log.info("=== 删除成功 === 客户ID: {}", id);
+            System.out.println("=== 删除成功 === 客户ID: " + id);
+            return Result.success(null, "删除成功");
+        } catch (Exception e) {
+            log.error("=== 删除失败 === 客户ID: {}, 错误: {}", id, e.getMessage());
+            System.out.println("=== 删除失败 === 客户ID: " + id + ", 错误: " + e.getMessage());
+            throw e;
+        }
     }
 }
