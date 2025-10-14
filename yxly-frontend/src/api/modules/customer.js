@@ -1,53 +1,35 @@
 import request from '@/utils/request'
 
-// 获取客户列表
-export function getCustomerList(params) {
+// 分页查询客户列表
+export function getCustomerPage(params) {
   return request({
-    url: '/v1/customers',
+    url: '/api/v1/admin/customers',
     method: 'GET',
     params
   })
 }
 
 // 获取客户详情
-export function getCustomerDetail(id) {
+export function getCustomerById(id) {
   return request({
-    url: `/v1/customers/${id}`,
+    url: `/api/v1/admin/customers/${id}`,
     method: 'GET'
   })
 }
 
-// 创建客户
-export function createCustomer(data) {
+// 更新客户状态
+export function updateCustomerStatus(id, status) {
   return request({
-    url: '/v1/customers',
-    method: 'POST',
-    data
-  })
-}
-
-// 更新客户
-export function updateCustomer(id, data) {
-  return request({
-    url: `/v1/customers/${id}`,
+    url: `/api/v1/admin/customers/${id}/status`,
     method: 'PUT',
-    data
+    params: { status }
   })
 }
 
 // 删除客户
 export function deleteCustomer(id) {
   return request({
-    url: `/v1/customers/${id}`,
+    url: `/api/v1/admin/customers/${id}`,
     method: 'DELETE'
-  })
-}
-
-// 搜索客户
-export function searchCustomer(keyword) {
-  return request({
-    url: '/v1/customers/search',
-    method: 'GET',
-    params: { keyword }
   })
 }

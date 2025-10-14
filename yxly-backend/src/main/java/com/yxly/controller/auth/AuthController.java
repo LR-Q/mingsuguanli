@@ -42,7 +42,7 @@ public class AuthController {
     @Operation(summary = "用户登录", description = "支持用户名/邮箱/手机号登录")
     @PostMapping("/login")
     public Result<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        log.info("用户登录请求: {}", request.getAccount());
+        log.info("用户登录请求: account={}, userType={}", request.getAccount(), request.getUserType());
         LoginResponse response = authService.login(request);
         return Result.success(response, "登录成功");
     }
@@ -55,10 +55,10 @@ public class AuthController {
         return Result.success(response, "Token刷新成功");
     }
     
-    @Operation(summary = "重置密码", description = "通过手机号和短信验证码重置密码")
+    @Operation(summary = "重置密码", description = "通过手机号和邮箱双重验证重置密码")
     @PostMapping("/reset-password")
     public Result<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        log.info("重置密码请求: {}", request.getPhone());
+        log.info("重置密码请求: phone={}, email={}", request.getPhone(), request.getEmail());
         authService.resetPassword(request);
         return Result.success(null, "密码重置成功");
     }

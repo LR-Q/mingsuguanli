@@ -28,4 +28,7 @@ public class LoginRequest {
     
     @Schema(description = "记住登录", example = "true")
     private Boolean rememberMe = false;
+    
+    @Schema(description = "登录类型", example = "user", allowableValues = {"user", "admin"})
+    private String userType = "user";
 }

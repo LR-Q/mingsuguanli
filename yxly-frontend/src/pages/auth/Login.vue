@@ -34,12 +34,23 @@
         </el-form-item>
         
         <el-form-item>
-          <el-checkbox v-model="loginForm.rememberMe">
-            记住我
-          </el-checkbox>
-          <el-link type="primary" style="float: right">
-            忘记密码？
-          </el-link>
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <el-checkbox v-model="loginForm.rememberMe">
+              记住我
+            </el-checkbox>
+            <el-link type="primary" @click="$router.push('/forgot-password')">
+              忘记密码？
+            </el-link>
+          </div>
+        </el-form-item>
+        
+        <el-form-item>
+          <div style="text-align: center; width: 100%;">
+            <el-radio-group v-model="loginForm.loginType">
+              <el-radio label="user">普通用户</el-radio>
+              <el-radio label="admin">管理员</el-radio>
+            </el-radio-group>
+          </div>
         </el-form-item>
         
         <el-form-item>
@@ -87,7 +98,8 @@ const loading = ref(false)
 const loginForm = reactive({
   account: '',
   password: '',
-  rememberMe: false
+  rememberMe: false,
+  loginType: 'user' // 默认为普通用户登录
 })
 
 // 表单验证规则
@@ -113,7 +125,8 @@ const handleLogin = async () => {
     const response = await login({
       account: loginForm.account,
       password: loginForm.password,
-      rememberMe: loginForm.rememberMe
+      rememberMe: loginForm.rememberMe,
+      userType: loginForm.loginType
     })
     
     if (response.data) {
@@ -124,8 +137,14 @@ const handleLogin = async () => {
       
       ElMessage.success('登录成功')
       
-      // 跳转到首页
-      router.push('/')
+      // 根据登录类型跳转到不同页面
+      if (loginForm.loginType === 'admin') {
+        // 管理员登录，跳转到管理后台
+        router.push('/admin')
+      } else {
+        // 普通用户登录，跳转到用户首页
+        router.push('/home')
+      }
     }
   } catch (error) {
     console.error('登录失败:', error)

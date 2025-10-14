@@ -39,6 +39,7 @@ public enum ResultCode {
     LOGIN_FAILED(10107, "登录失败"),
     EMAIL_ALREADY_EXISTS(10108, "邮箱已被注册"),
     PHONE_ALREADY_EXISTS(10109, "手机号已被注册"),
+    ACCESS_DENIED(10110, "访问被拒绝"),
     SMS_CODE_ERROR(10111, "短信验证码错误"),
     
     // 房间相关错误 102xx

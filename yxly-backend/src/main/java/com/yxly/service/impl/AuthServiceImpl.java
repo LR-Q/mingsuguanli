@@ -85,7 +85,7 @@ public class AuthServiceImpl implements AuthService {
     
     @Override
     public LoginResponse login(LoginRequest request) {
-        log.info("用户登录: {}", request.getAccount());
+        log.info("用户登录: {}, 登录类型: {}", request.getAccount(), request.getUserType());
         
         try {
             // 1. 获取用户信息
@@ -100,22 +100,33 @@ public class AuthServiceImpl implements AuthService {
             }
             
             // 3. 验证密码
-            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            boolean passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPassword());
+            log.info("密码验证结果: {}", passwordMatches);
+            
+            if (!passwordMatches) {
                 throw new BusinessException(ResultCode.LOGIN_FAILED, "用户名或密码错误");
             }
             
-            // 4. 生成Token
+            // 4. 验证管理员权限
+            if ("admin".equals(request.getUserType())) {
+                // 只有用户名为admin的用户才能以管理员身份登录
+                if (!"admin".equals(user.getUsername())) {
+                    throw new BusinessException(ResultCode.ACCESS_DENIED, "您不是管理员，无法以管理员身份登录");
+                }
+            }
+            
+            // 5. 生成Token
             String accessToken = jwtTokenProvider.generateToken(user.getUsername());
             String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
             Long expiresIn = jwtTokenProvider.getExpirationTime();
             
-            // 5. 更新最后登录信息
+            // 6. 更新最后登录信息
             user.setLastLoginTime(LocalDateTime.now());
             // 这里可以获取真实IP，暂时使用占位符
             user.setLastLoginIp("127.0.0.1");
             userMapper.updateById(user);
             
-            // 6. 构建响应
+            // 7. 构建响应
             LoginResponse.UserInfo userInfo = LoginResponse.UserInfo.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -187,30 +198,41 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void resetPassword(ResetPasswordRequest request) {
+        log.info("重置密码请求: phone={}, email={}", request.getPhone(), request.getEmail());
+        
         // 验证密码一致性
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "两次输入的密码不一致");
         }
         
-        // TODO: 验证短信验证码
-        // 这里应该验证短信验证码的有效性
-        
-        // 查找用户
+        // 通过手机号和邮箱双重验证查找用户
         SysUser user = userMapper.selectOne(
             new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getPhone, request.getPhone())
+                .eq(SysUser::getEmail, request.getEmail())
                 .eq(SysUser::getDeleted, 0)
         );
         
         if (user == null) {
-            throw new BusinessException(ResultCode.USER_NOT_FOUND, "手机号未注册");
+            throw new BusinessException(ResultCode.USER_NOT_FOUND, "手机号或邮箱不匹配，请检查输入信息");
+        }
+        
+        // 检查用户状态
+        if (user.getStatus() == 0) {
+            throw new BusinessException(ResultCode.USER_DISABLED, "用户已被禁用，无法重置密码");
         }
         
         // 更新密码
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userMapper.updateById(user);
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+        user.setPassword(encodedPassword);
+        user.setUpdateTime(LocalDateTime.now());
         
-        log.info("用户重置密码成功: {}", user.getUsername());
+        int updateResult = userMapper.updateById(user);
+        if (updateResult <= 0) {
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "密码重置失败，请稍后重试");
+        }
+        
+        log.info("用户重置密码成功: username={}, phone={}", user.getUsername(), request.getPhone());
     }
     
     @Override

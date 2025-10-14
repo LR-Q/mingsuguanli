@@ -33,6 +33,26 @@ const constantRoutes = [
     }
   },
   {
+    path: '/admin-login',
+    name: 'AdminLogin',
+    component: () => import('@/pages/auth/AdminLogin.vue'),
+    meta: {
+      title: '管理员登录',
+      requiresAuth: false,
+      hideInMenu: true
+    }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('@/pages/auth/ForgotPassword.vue'),
+    meta: {
+      title: '忘记密码',
+      requiresAuth: false,
+      hideInMenu: true
+    }
+  },
+  {
     path: '/404',
     name: 'NotFound',
     component: () => import('@/pages/error/404.vue'),
@@ -43,29 +63,133 @@ const constantRoutes = [
   }
 ]
 
-// 动态路由
-const asyncRoutes = [
+// 用户路由（面向客户）
+const userRoutes = [
   {
     path: '/',
-    name: 'Layout',
-    component: () => import('@/layouts/DefaultLayout.vue'),
-    redirect: '/dashboard',
+    redirect: '/home'
+  },
+  {
+    path: '/home',
+    name: 'Home',
+    component: () => import('@/layouts/SimpleUserLayout.vue'),
     children: [
       {
-        path: 'dashboard',
-        name: 'Dashboard',
-        component: () => import('@/pages/dashboard/Index.vue'),
+        path: '',
+        name: 'HomePage',
+        component: () => import('@/pages/user/SimpleHome.vue'),
         meta: {
-          title: '仪表盘',
-          icon: 'Dashboard',
-          requiresAuth: true
+          title: '首页',
+          requiresAuth: false
         }
       }
     ]
   },
   {
     path: '/rooms',
-    name: 'RoomManagement',
+    name: 'UserRooms',
+    component: () => import('@/layouts/SimpleUserLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'RoomsPage',
+        component: () => import('@/pages/user/Rooms.vue'),
+        meta: {
+          title: '房间预订',
+          requiresAuth: false
+        }
+      },
+    ]
+  },
+  {
+    path: '/rooms/:id/book',
+    name: 'BookRoom',
+    component: () => import('@/layouts/UserLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'BookRoomPage',
+        component: () => import('@/pages/user/BookRoom.vue'),
+        meta: {
+          title: '预订房间',
+          requiresAuth: true
+        }
+      }
+    ]
+  },
+  {
+    path: '/profile',
+    name: 'UserProfile',
+    component: () => import('@/layouts/UserLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'ProfilePage',
+        component: () => import('@/pages/user/Profile.vue'),
+        meta: {
+          title: '个人中心',
+          requiresAuth: true
+        }
+      }
+    ]
+  },
+  {
+    path: '/orders',
+    name: 'UserOrders',
+    component: () => import('@/layouts/UserLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'OrdersPage',
+        component: () => import('@/pages/user/Orders.vue'),
+        meta: {
+          title: '我的订单',
+          requiresAuth: true
+        }
+      }
+    ]
+  }
+]
+
+// 管理员路由（面向房东/管理员）
+const adminRoutes = [
+  {
+    path: '/admin',
+    name: 'AdminLayout',
+    component: () => import('@/layouts/DefaultLayout.vue'),
+    redirect: '/admin/dashboard',
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true
+    },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/pages/dashboard/Index.vue'),
+        meta: {
+          title: '管理仪表盘',
+          icon: 'Dashboard',
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'customers',
+        name: 'CustomerManagement',
+        component: () => import('@/pages/admin/CustomerManagement.vue'),
+        meta: {
+          title: '客户管理',
+          icon: 'User',
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      }
+    ]
+  },
+  {
+    path: '/admin/rooms',
+    name: 'AdminRoomManagement',
     component: () => import('@/layouts/DefaultLayout.vue'),
     meta: {
       title: '房间管理',
@@ -165,42 +289,12 @@ const asyncRoutes = [
       }
     ]
   },
-  {
-    path: '/customers',
-    name: 'CustomerManagement',
-    component: () => import('@/layouts/DefaultLayout.vue'),
-    meta: {
-      title: '客户管理',
-      icon: 'User',
-      requiresAuth: true
-    },
-    children: [
-      {
-        path: '',
-        name: 'CustomerList',
-        component: () => import('@/pages/customers/List.vue'),
-        meta: {
-          title: '客户列表',
-          requiresAuth: true
-        }
-      },
-      {
-        path: ':id',
-        name: 'CustomerDetail',
-        component: () => import('@/pages/customers/Detail.vue'),
-        meta: {
-          title: '客户详情',
-          requiresAuth: true,
-          hideInMenu: true
-        }
-      }
-    ]
-  }
+  // 客户管理功能已移至 /admin/customers
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: [...constantRoutes, ...asyncRoutes],
+  routes: [...constantRoutes, ...userRoutes, ...adminRoutes],
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
@@ -239,10 +333,21 @@ router.beforeEach(async (to, from, next) => {
     }
   }
   
-  // 如果已登录访问登录页，重定向到首页
-  if (to.path === '/login' && authStore.isAuthenticated) {
+  // 如果已登录访问登录页，重定向到相应首页
+  if ((to.path === '/login' || to.path === '/admin-login') && authStore.isAuthenticated) {
+    // 可以根据用户角色判断跳转到哪里，这里暂时都跳转到首页
     next('/')
     return
+  }
+  
+  // 检查管理员权限
+  if (to.meta.requiresAdmin) {
+    if (!authStore.isAuthenticated) {
+      next('/admin-login')
+      return
+    }
+    // 这里可以添加更严格的管理员权限检查
+    // 暂时只要登录就可以访问管理员页面
   }
   
   next()

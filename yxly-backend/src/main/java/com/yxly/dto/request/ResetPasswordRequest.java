@@ -22,10 +22,10 @@ public class ResetPasswordRequest {
     @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式不正确")
     private String phone;
     
-    @Schema(description = "短信验证码", example = "123456")
-    @NotBlank(message = "验证码不能为空")
-    @Size(min = 4, max = 6, message = "验证码长度在4-6位")
-    private String smsCode;
+    @Schema(description = "邮箱", example = "user@example.com")
+    @NotBlank(message = "邮箱不能为空")
+    @Pattern(regexp = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$", message = "邮箱格式不正确")
+    private String email;
     
     @Schema(description = "新密码", example = "123456")
     @NotBlank(message = "新密码不能为空")
