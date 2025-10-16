@@ -118,36 +118,70 @@ const userRoutes = [
     ]
   },
   {
-    path: '/profile',
-    name: 'UserProfile',
-    component: () => import('@/layouts/UserLayout.vue'),
+    path: '/user-center',
+    name: 'UserCenter',
+    component: () => import('@/layouts/UserCenterLayout.vue'),
+    redirect: '/user-center/profile',
+    meta: {
+      title: '个人中心',
+      requiresAuth: true
+    },
     children: [
       {
-        path: '',
-        name: 'ProfilePage',
-        component: () => import('@/pages/user/Profile.vue'),
+        path: 'profile',
+        name: 'UserProfile',
+        component: () => import('@/pages/user/center/Profile.vue'),
         meta: {
-          title: '个人中心',
+          title: '个人信息',
+          requiresAuth: true
+        }
+      },
+      {
+        path: 'wallet',
+        name: 'UserWallet',
+        component: () => import('@/pages/user/center/Wallet.vue'),
+        meta: {
+          title: '我的钱包',
+          requiresAuth: true
+        }
+      },
+      {
+        path: 'orders',
+        name: 'UserOrders',
+        component: () => import('@/pages/user/center/Orders.vue'),
+        meta: {
+          title: '预订信息',
+          requiresAuth: true
+        }
+      },
+      {
+        path: 'favorites',
+        name: 'UserFavorites',
+        component: () => import('@/pages/user/center/Favorites.vue'),
+        meta: {
+          title: '我的收藏',
+          requiresAuth: true
+        }
+      },
+      {
+        path: 'settings',
+        name: 'UserSettings',
+        component: () => import('@/pages/user/center/Settings.vue'),
+        meta: {
+          title: '账户设置',
           requiresAuth: true
         }
       }
     ]
   },
+  // 兼容旧路由
+  {
+    path: '/profile',
+    redirect: '/user-center/profile'
+  },
   {
     path: '/orders',
-    name: 'UserOrders',
-    component: () => import('@/layouts/UserLayout.vue'),
-    children: [
-      {
-        path: '',
-        name: 'OrdersPage',
-        component: () => import('@/pages/user/Orders.vue'),
-        meta: {
-          title: '我的订单',
-          requiresAuth: true
-        }
-      }
-    ]
+    redirect: '/user-center/orders'
   }
 ]
 
@@ -169,7 +203,7 @@ const adminRoutes = [
         component: () => import('@/pages/dashboard/Index.vue'),
         meta: {
           title: '管理仪表盘',
-          icon: 'Dashboard',
+          icon: 'DataBoard',
           requiresAuth: true,
           requiresAdmin: true
         }
@@ -184,112 +218,120 @@ const adminRoutes = [
           requiresAuth: true,
           requiresAdmin: true
         }
-      }
-    ]
-  },
-  {
-    path: '/admin/rooms',
-    name: 'AdminRoomManagement',
-    component: () => import('@/layouts/DefaultLayout.vue'),
-    meta: {
-      title: '房间管理',
-      icon: 'House',
-      requiresAuth: true
-    },
-    children: [
+      },
       {
-        path: '',
-        name: 'RoomList',
+        path: 'rooms',
+        name: 'RoomManagement',
         component: () => import('@/pages/rooms/List.vue'),
         meta: {
-          title: '房间列表',
-          requiresAuth: true
+          title: '房间管理',
+          icon: 'House',
+          requiresAuth: true,
+          requiresAdmin: true
         }
       },
       {
-        path: 'create',
+        path: 'bookings',
+        name: 'BookingManagement',
+        component: () => import('@/pages/bookings/List.vue'),
+        meta: {
+          title: '订单管理',
+          icon: 'Document',
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'recharge',
+        name: 'RechargeManagement',
+        component: () => import('@/pages/admin/RechargeManagement.vue'),
+        meta: {
+          title: '充值管理',
+          icon: 'Wallet',
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'withdraw',
+        name: 'WithdrawManagement',
+        component: () => import('@/pages/admin/WithdrawManagement.vue'),
+        meta: {
+          title: '提现管理',
+          icon: 'Money',
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      // 隐藏的子页面路由
+      {
+        path: 'rooms/create',
         name: 'RoomCreate',
         component: () => import('@/pages/rooms/Form.vue'),
         meta: {
           title: '添加房间',
           requiresAuth: true,
+          requiresAdmin: true,
           hideInMenu: true
         }
       },
       {
-        path: ':id/edit',
+        path: 'rooms/:id/edit',
         name: 'RoomEdit',
         component: () => import('@/pages/rooms/Form.vue'),
         meta: {
           title: '编辑房间',
           requiresAuth: true,
+          requiresAdmin: true,
           hideInMenu: true
         }
       },
       {
-        path: ':id',
+        path: 'rooms/:id',
         name: 'RoomDetail',
         component: () => import('@/pages/rooms/Detail.vue'),
         meta: {
           title: '房间详情',
           requiresAuth: true,
+          requiresAdmin: true,
           hideInMenu: true
-        }
-      }
-    ]
-  },
-  {
-    path: '/bookings',
-    name: 'BookingManagement',
-    component: () => import('@/layouts/DefaultLayout.vue'),
-    meta: {
-      title: '订单管理',
-      icon: 'Document',
-      requiresAuth: true
-    },
-    children: [
-      {
-        path: '',
-        name: 'BookingList',
-        component: () => import('@/pages/bookings/List.vue'),
-        meta: {
-          title: '订单列表',
-          requiresAuth: true
         }
       },
       {
-        path: 'create',
+        path: 'bookings/create',
         name: 'BookingCreate',
         component: () => import('@/pages/bookings/Form.vue'),
         meta: {
           title: '创建订单',
           requiresAuth: true,
+          requiresAdmin: true,
           hideInMenu: true
         }
       },
       {
-        path: ':id',
+        path: 'bookings/:id',
         name: 'BookingDetail',
         component: () => import('@/pages/bookings/Detail.vue'),
         meta: {
           title: '订单详情',
           requiresAuth: true,
+          requiresAdmin: true,
           hideInMenu: true
         }
       },
       {
-        path: ':id/checkin',
+        path: 'bookings/:id/checkin',
         name: 'BookingCheckIn',
         component: () => import('@/pages/bookings/CheckIn.vue'),
         meta: {
           title: '办理入住',
           requiresAuth: true,
+          requiresAdmin: true,
           hideInMenu: true
         }
       }
     ]
-  },
-  // 客户管理功能已移至 /admin/customers
+  }
 ]
 
 const router = createRouter({
@@ -335,8 +377,12 @@ router.beforeEach(async (to, from, next) => {
   
   // 如果已登录访问登录页，重定向到相应首页
   if ((to.path === '/login' || to.path === '/admin-login') && authStore.isAuthenticated) {
-    // 可以根据用户角色判断跳转到哪里，这里暂时都跳转到首页
-    next('/')
+    // 根据用户角色判断跳转到哪里
+    if (authStore.userInfo?.userType === 'admin' || authStore.userInfo?.roles?.includes('admin')) {
+      next('/admin')
+    } else {
+      next('/home')
+    }
     return
   }
   

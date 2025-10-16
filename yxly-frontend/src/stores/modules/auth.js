@@ -1,13 +1,17 @@
 import { defineStore } from 'pinia'
 import { logout, refreshToken } from '@/api/modules/auth'
-import { getToken, setToken, removeToken, getRefreshToken, setRefreshToken, removeRefreshToken } from '@/utils/auth'
+import { 
+  getToken, setToken, removeToken, 
+  getRefreshToken, setRefreshToken, removeRefreshToken,
+  getUserInfo, setUserInfo, removeUserInfo 
+} from '@/utils/auth'
 import router from '@/router'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: getToken() || '',
     refreshToken: getRefreshToken() || '',
-    userInfo: null,
+    userInfo: getUserInfo(),
     permissions: []
   }),
 
@@ -41,6 +45,7 @@ export const useAuthStore = defineStore('auth', {
     // 设置用户信息
     setUserInfo(userInfo) {
       this.userInfo = userInfo
+      setUserInfo(userInfo) // 持久化保存
     },
 
     // 获取用户信息
@@ -99,6 +104,33 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    // 更新用户信息
+    updateUserInfo(userInfo) {
+      this.userInfo = { ...this.userInfo, ...userInfo }
+      setUserInfo(this.userInfo) // 持久化保存
+    },
+
+    // 初始化认证状态（页面刷新时调用）
+    initAuthState() {
+      // 从持久化存储中恢复状态
+      this.token = getToken() || ''
+      this.refreshToken = getRefreshToken() || ''
+      this.userInfo = getUserInfo()
+      
+      // 如果有token但没有用户信息，清除无效状态
+      if (this.token && !this.userInfo) {
+        console.log('检测到无效的认证状态，清除token')
+        this.clearUserInfo()
+      }
+      
+      console.log('认证状态初始化完成:', {
+        hasToken: !!this.token,
+        hasRefreshToken: !!this.refreshToken,
+        hasUserInfo: !!this.userInfo,
+        username: this.userInfo?.username
+      })
+    },
+
     // 清除用户信息
     clearUserInfo() {
       this.token = ''
@@ -107,6 +139,7 @@ export const useAuthStore = defineStore('auth', {
       this.permissions = []
       removeToken()
       removeRefreshToken()
+      removeUserInfo() // 清除持久化的用户信息
     }
   }
 })

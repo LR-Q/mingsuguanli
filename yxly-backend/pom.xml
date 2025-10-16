@@ -28,6 +28,7 @@
         <springdoc.version>1.7.0</springdoc.version>
         <hutool.version>5.8.24</hutool.version>
         <fastjson2.version>2.0.43</fastjson2.version>
+        <minio.version>8.5.7</minio.version>
     </properties>
     
     <dependencies>
@@ -113,6 +114,13 @@
             <groupId>com.alibaba.fastjson2</groupId>
             <artifactId>fastjson2</artifactId>
             <version>${fastjson2.version}</version>
+        </dependency>
+        
+        <!-- MinIO 对象存储 -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>${minio.version}</version>
         </dependency>
         
         <!-- Spring Boot DevTools 热加载 -->

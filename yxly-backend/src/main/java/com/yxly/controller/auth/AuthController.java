@@ -4,6 +4,7 @@ import com.yxly.common.Result;
 import com.yxly.dto.request.LoginRequest;
 import com.yxly.dto.request.RegisterRequest;
 import com.yxly.dto.request.ResetPasswordRequest;
+import com.yxly.dto.request.ChangePasswordRequest;
 import com.yxly.dto.response.LoginResponse;
 import com.yxly.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 /**
@@ -91,5 +93,21 @@ public class AuthController {
         // JWT是无状态的，登出只需要前端清除Token
         // 如果需要服务端登出，可以维护一个黑名单
         return Result.success(null, "登出成功");
+    }
+    
+    @Operation(summary = "修改密码", description = "用户修改密码")
+    @PostMapping("/change-password")
+    public Result<Void> changePassword(@RequestBody @Valid ChangePasswordRequest request, 
+                                     HttpServletRequest httpRequest) {
+        log.info("用户修改密码请求");
+        
+        // 从JWT token中获取用户ID
+        String token = httpRequest.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        
+        authService.changePassword(token, request);
+        return Result.success(null, "密码修改成功");
     }
 }

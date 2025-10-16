@@ -10,6 +10,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -85,4 +86,8 @@ public class SysUser extends BaseEntity {
     @Schema(description = "手机验证状态")
     @TableField("phone_verified")
     private Integer phoneVerified;
+    
+    @Schema(description = "账户余额")
+    @TableField("balance")
+    private BigDecimal balance;
 }

@@ -26,9 +26,30 @@
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                  <el-dropdown-item command="orders">我的订单</el-dropdown-item>
-                  <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                  <el-dropdown-item command="profile">
+                    <el-icon><User /></el-icon>
+                    个人中心
+                  </el-dropdown-item>
+                  <el-dropdown-item command="wallet">
+                    <el-icon><Wallet /></el-icon>
+                    我的钱包
+                  </el-dropdown-item>
+                  <el-dropdown-item command="orders">
+                    <el-icon><Document /></el-icon>
+                    预订信息
+                  </el-dropdown-item>
+                  <el-dropdown-item command="favorites">
+                    <el-icon><Star /></el-icon>
+                    我的收藏
+                  </el-dropdown-item>
+                  <el-dropdown-item command="settings" divided>
+                    <el-icon><Setting /></el-icon>
+                    账户设置
+                  </el-dropdown-item>
+                  <el-dropdown-item command="logout" divided>
+                    <el-icon><SwitchButton /></el-icon>
+                    退出登录
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -81,7 +102,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowDown } from '@element-plus/icons-vue'
+import { ArrowDown, User, Wallet, Document, Star, Setting, SwitchButton } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/modules/auth'
 
 const router = useRouter()
@@ -100,10 +121,19 @@ const userAvatar = computed(() => {
 const handleUserAction = async (command) => {
   switch (command) {
     case 'profile':
-      router.push('/profile')
+      router.push('/user-center/profile')
+      break
+    case 'wallet':
+      router.push('/user-center/wallet')
       break
     case 'orders':
-      router.push('/orders')
+      router.push('/user-center/orders')
+      break
+    case 'favorites':
+      router.push('/user-center/favorites')
+      break
+    case 'settings':
+      router.push('/user-center/settings')
       break
     case 'logout':
       try {
@@ -114,6 +144,7 @@ const handleUserAction = async (command) => {
         })
         await authStore.logout()
         ElMessage.success('退出登录成功')
+        router.push('/home')
       } catch (error) {
         // 用户取消操作
       }
@@ -317,6 +348,26 @@ const handleUserAction = async (command) => {
       grid-template-columns: 1fr;
       gap: 24px;
       text-align: center;
+    }
+  }
+}
+
+// 下拉菜单样式
+:deep(.el-dropdown-menu) {
+  .el-dropdown-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    
+    .el-icon {
+      font-size: 16px;
+      color: #409eff;
+    }
+    
+    &:hover {
+      background: #f0f8ff;
+      color: #409eff;
     }
   }
 }

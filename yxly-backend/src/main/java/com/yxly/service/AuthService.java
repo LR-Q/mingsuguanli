@@ -3,6 +3,7 @@ package com.yxly.service;
 import com.yxly.dto.request.LoginRequest;
 import com.yxly.dto.request.RegisterRequest;
 import com.yxly.dto.request.ResetPasswordRequest;
+import com.yxly.dto.request.ChangePasswordRequest;
 import com.yxly.dto.response.LoginResponse;
 import com.yxly.entity.SysUser;
 
@@ -76,4 +77,12 @@ public interface AuthService {
      * @return 是否存在
      */
     boolean existsByPhone(String phone);
+    
+    /**
+     * 修改密码
+     * 
+     * @param token JWT令牌
+     * @param request 修改密码请求
+     */
+    void changePassword(String token, ChangePasswordRequest request);
 }

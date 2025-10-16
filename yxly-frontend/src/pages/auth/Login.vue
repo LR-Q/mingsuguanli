@@ -130,10 +130,16 @@ const handleLogin = async () => {
     })
     
     if (response.data) {
-      // 保存登录信息到store
+      // 保存登录信息到store，确保用户信息包含用户类型
       authStore.setToken(response.data.accessToken)
       authStore.setRefreshToken(response.data.refreshToken)
-      authStore.setUserInfo(response.data.userInfo)
+      
+      // 确保用户信息包含用户类型
+      const userInfo = {
+        ...response.data.userInfo,
+        userType: loginForm.loginType  // 保存登录时选择的用户类型
+      }
+      authStore.setUserInfo(userInfo)
       
       ElMessage.success('登录成功')
       

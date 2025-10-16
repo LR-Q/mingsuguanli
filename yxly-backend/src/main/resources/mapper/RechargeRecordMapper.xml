@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yxly.mapper.RechargeRecordMapper">
+
+    <!-- 分页查询充值记录（管理员） -->
+    <select id="selectRechargeRecordPage" resultType="com.yxly.dto.response.RechargeRecordResponse">
+        SELECT 
+            r.id,
+            r.user_id,
+            r.username,
+            r.amount,
+            r.payment_method,
+            r.payment_proof,
+            r.status,
+            r.apply_time,
+            r.audit_time,
+            r.auditor_id,
+            r.auditor_name,
+            r.audit_remark,
+            r.user_remark,
+            r.create_time,
+            r.update_time
+        FROM recharge_record r
+        WHERE r.deleted = 0
+        <if test="username != null and username != ''">
+            AND r.username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="status != null">
+            AND r.status = #{status}
+        </if>
+        <if test="paymentMethod != null and paymentMethod != ''">
+            AND r.payment_method = #{paymentMethod}
+        </if>
+        ORDER BY r.apply_time DESC
+    </select>
+
+    <!-- 分页查询用户充值记录 -->
+    <select id="selectUserRechargeRecordPage" resultType="com.yxly.dto.response.RechargeRecordResponse">
+        SELECT 
+            r.id,
+            r.user_id,
+            r.username,
+            r.amount,
+            r.payment_method,
+            r.payment_proof,
+            r.status,
+            r.apply_time,
+            r.audit_time,
+            r.auditor_id,
+            r.auditor_name,
+            r.audit_remark,
+            r.user_remark,
+            r.create_time,
+            r.update_time
+        FROM recharge_record r
+        WHERE r.deleted = 0 AND r.user_id = #{userId}
+        ORDER BY r.apply_time DESC
+    </select>
+
+</mapper>

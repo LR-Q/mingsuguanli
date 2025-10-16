@@ -7,132 +7,217 @@
       </div>
 
       <div class="booking-content">
-        <!-- 房间信息 -->
-        <div class="room-section">
-          <el-card>
-            <template #header>
-              <h2>房间信息</h2>
-            </template>
-            <div class="room-info">
-              <div class="room-image">
+        <div v-if="loading" class="loading-container">
+          <el-skeleton :rows="8" animated />
+        </div>
+        
+        <el-card v-else class="booking-card">
+          <!-- 房间图片区域 -->
+          <div class="room-image-section" @mouseenter="showImageControls = true" @mouseleave="showImageControls = false">
+            <el-image 
+              v-if="roomInfo.currentImage" 
+              :src="roomInfo.currentImage" 
+              fit="cover"
+              class="room-main-image"
+            >
+              <template #error>
                 <div class="image-placeholder">
-                  <el-icon size="80"><Picture /></el-icon>
+                  <el-icon size="120"><Picture /></el-icon>
                   <p>房间图片</p>
                 </div>
-              </div>
-              <div class="room-details">
-                <h3>{{ roomInfo.name }}</h3>
-                <p class="description">{{ roomInfo.description }}</p>
-                <div class="features">
-                  <el-tag v-for="feature in roomInfo.features" :key="feature" size="small">
-                    {{ feature }}
-                  </el-tag>
-                </div>
-                <div class="room-specs">
-                  <span><el-icon><User /></el-icon> 最多{{ roomInfo.maxGuests }}人</span>
-                  <span><el-icon><Expand /></el-icon> {{ roomInfo.area }}㎡</span>
-                </div>
-              </div>
-            </div>
-          </el-card>
-        </div>
-
-        <!-- 预订表单 -->
-        <div class="booking-section">
-          <el-card>
-            <template #header>
-              <h2>预订信息</h2>
-            </template>
-            <el-form :model="bookingForm" :rules="bookingRules" ref="bookingFormRef" label-width="100px">
-              <el-form-item label="入住日期" prop="checkIn">
-                <el-date-picker
-                  v-model="bookingForm.checkIn"
-                  type="date"
-                  placeholder="选择入住日期"
-                  style="width: 100%"
-                  :disabled-date="disabledDate"
-                />
-              </el-form-item>
-              
-              <el-form-item label="退房日期" prop="checkOut">
-                <el-date-picker
-                  v-model="bookingForm.checkOut"
-                  type="date"
-                  placeholder="选择退房日期"
-                  style="width: 100%"
-                  :disabled-date="disabledCheckOutDate"
-                />
-              </el-form-item>
-              
-              <el-form-item label="入住人数" prop="guests">
-                <el-select v-model="bookingForm.guests" placeholder="选择人数" style="width: 100%">
-                  <el-option 
-                    v-for="i in roomInfo.maxGuests" 
-                    :key="i" 
-                    :label="`${i}人`" 
-                    :value="i" 
-                  />
-                </el-select>
-              </el-form-item>
-              
-              <el-form-item label="联系人" prop="contactName">
-                <el-input v-model="bookingForm.contactName" placeholder="请输入联系人姓名" />
-              </el-form-item>
-              
-              <el-form-item label="联系电话" prop="contactPhone">
-                <el-input v-model="bookingForm.contactPhone" placeholder="请输入联系电话" />
-              </el-form-item>
-              
-              <el-form-item label="特殊要求">
-                <el-input
-                  v-model="bookingForm.specialRequests"
-                  type="textarea"
-                  :rows="3"
-                  placeholder="如有特殊要求请在此说明（可选）"
-                />
-              </el-form-item>
-            </el-form>
-          </el-card>
-        </div>
-
-        <!-- 价格明细 -->
-        <div class="price-section">
-          <el-card>
-            <template #header>
-              <h2>价格明细</h2>
-            </template>
-            <div class="price-details">
-              <div class="price-item">
-                <span>房间单价</span>
-                <span>￥{{ roomInfo.price }}/晚</span>
-              </div>
-              <div class="price-item">
-                <span>入住天数</span>
-                <span>{{ nights }}晚</span>
-              </div>
-              <div class="price-item subtotal">
-                <span>小计</span>
-                <span>￥{{ subtotal }}</span>
-              </div>
-              <div class="price-item total">
-                <span>总计</span>
-                <span>￥{{ totalAmount }}</span>
-              </div>
+              </template>
+            </el-image>
+            <div v-else class="image-placeholder">
+              <el-icon size="120"><Picture /></el-icon>
+              <p>房间图片</p>
             </div>
             
-            <div class="booking-actions">
-              <el-button size="large" @click="goBack">取消</el-button>
-              <el-button 
-                type="primary" 
-                size="large" 
-                @click="submitBooking"
-                :loading="submitting"
+            <!-- 图片轮播控制 -->
+            <div v-if="roomInfo.imageList && roomInfo.imageList.length > 1" class="image-controls">
+              <!-- 左右切换按钮 -->
+              <div 
+                v-show="showImageControls" 
+                class="image-nav prev-btn" 
+                @click="prevBookingImage"
               >
-                确认预订
-              </el-button>
+                <el-icon><ArrowLeft /></el-icon>
+              </div>
+              <div 
+                v-show="showImageControls" 
+                class="image-nav next-btn" 
+                @click="nextBookingImage"
+              >
+                <el-icon><ArrowRight /></el-icon>
+              </div>
+              
+              <!-- 图片指示器 -->
+              <div class="image-indicators">
+                <span 
+                  v-for="(img, index) in roomInfo.imageList" 
+                  :key="index"
+                  class="indicator"
+                  :class="{ active: index === roomInfo.currentImageIndex }"
+                  @click="setBookingImage(index)"
+                ></span>
+              </div>
             </div>
-          </el-card>
-        </div>
+          </div>
+
+          <!-- 主要内容区域 -->
+          <div class="main-content">
+            <!-- 左侧：房间信息 + 预订表单 + 房间设施 -->
+            <div class="left-section">
+              <!-- 房间基本信息 -->
+              <div class="room-info-section">
+                <h2>{{ roomInfo.name }}</h2>
+                <p class="room-description">{{ roomInfo.description }}</p>
+                
+                <div class="room-specs">
+                  <div class="spec-item">
+                    <el-icon><User /></el-icon>
+                    <span>最多{{ roomInfo.maxGuests }}人</span>
+                  </div>
+                  <div class="spec-item">
+                    <el-icon><Expand /></el-icon>
+                    <span>{{ roomInfo.area }}㎡</span>
+                  </div>
+                  <div class="spec-item" v-if="roomInfo.bedType">
+                    <span>{{ roomInfo.bedType }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 预订表单 -->
+              <div class="booking-form-section">
+                <h3>预订信息</h3>
+                <el-form :model="bookingForm" :rules="bookingRules" ref="bookingFormRef" label-width="80px">
+                  <el-row :gutter="16">
+                    <el-col :span="12">
+                      <el-form-item label="入住日期" prop="checkIn">
+                        <el-date-picker
+                          v-model="bookingForm.checkIn"
+                          type="date"
+                          placeholder="选择入住日期"
+                          style="width: 100%"
+                          :disabled-date="disabledDate"
+                        />
+                      </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                      <el-form-item label="退房日期" prop="checkOut">
+                        <el-date-picker
+                          v-model="bookingForm.checkOut"
+                          type="date"
+                          placeholder="选择退房日期"
+                          style="width: 100%"
+                          :disabled-date="disabledCheckOutDate"
+                        />
+                      </el-form-item>
+                    </el-col>
+                  </el-row>
+                  
+                  <el-row :gutter="16">
+                    <el-col :span="12">
+                      <el-form-item label="入住人数" prop="guests">
+                        <el-select v-model="bookingForm.guests" placeholder="选择人数" style="width: 100%">
+                          <el-option 
+                            v-for="i in roomInfo.maxGuests" 
+                            :key="i" 
+                            :label="`${i}人`" 
+                            :value="i" 
+                          />
+                        </el-select>
+                      </el-form-item>
+                    </el-col>
+                  </el-row>
+                  
+                  <el-row :gutter="16">
+                    <el-col :span="12">
+                      <el-form-item label="联系人" prop="contactName">
+                        <el-input v-model="bookingForm.contactName" placeholder="请输入联系人姓名" />
+                      </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                      <el-form-item label="联系电话" prop="contactPhone">
+                        <el-input v-model="bookingForm.contactPhone" placeholder="请输入联系电话" />
+                      </el-form-item>
+                    </el-col>
+                  </el-row>
+                  
+                  <el-form-item label="特殊要求">
+                    <el-input
+                      v-model="bookingForm.specialRequests"
+                      type="textarea"
+                      :rows="3"
+                      placeholder="如有特殊要求请在此说明（可选）"
+                    />
+                  </el-form-item>
+                </el-form>
+              </div>
+
+              <!-- 房间设施 -->
+              <div class="room-facilities-section" v-if="roomInfo.features && roomInfo.features.length > 0">
+                <h4>房间设施</h4>
+                <div class="facilities-grid">
+                  <div class="facility-category" v-for="category in facilitiesCategories" :key="category.name">
+                    <h5 class="category-title">{{ category.name }}</h5>
+                    <div class="facility-items">
+                      <div 
+                        v-for="facility in category.items" 
+                        :key="facility.name"
+                        class="facility-item"
+                        :class="{ 'available': facility.available, 'unavailable': !facility.available }"
+                      >
+                        <el-icon class="facility-icon">
+                          <Check v-if="facility.available" />
+                          <Close v-else />
+                        </el-icon>
+                        <span class="facility-name">{{ facility.name }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右侧：价格明细 -->
+            <div class="right-section">
+              <div class="price-card">
+                <h3>价格明细</h3>
+                <div class="price-details">
+                  <div class="price-item">
+                    <span>房间单价</span>
+                    <span>￥{{ roomInfo.price }}/晚</span>
+                  </div>
+                  <div class="price-item">
+                    <span>入住天数</span>
+                    <span>{{ nights }}晚</span>
+                  </div>
+                  <div class="price-item subtotal">
+                    <span>小计</span>
+                    <span>￥{{ subtotal }}</span>
+                  </div>
+                  <div class="price-item total">
+                    <span>总计</span>
+                    <span>￥{{ totalAmount }}</span>
+                  </div>
+                </div>
+                
+                <div class="booking-actions">
+                  <el-button size="large" @click="goBack">取消</el-button>
+                  <el-button 
+                    type="primary" 
+                    size="large" 
+                    @click="submitBooking"
+                    :loading="submitting"
+                  >
+                    确认预订
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-card>
       </div>
     </div>
   </div>
@@ -142,7 +227,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Picture, User, Expand, ArrowLeft } from '@element-plus/icons-vue'
+import { Picture, User, Expand, ArrowLeft, Check, Close } from '@element-plus/icons-vue'
+import { getUserRoomById } from '@/api/modules/userRoom'
 
 const router = useRouter()
 const route = useRoute()
@@ -150,16 +236,18 @@ const route = useRoute()
 // 响应式数据
 const bookingFormRef = ref()
 const submitting = ref(false)
+const loading = ref(true)
+const showImageControls = ref(false)
 
-// 房间信息（模拟数据）
+// 房间信息（从API获取）
 const roomInfo = ref({
-  id: 1,
-  name: '豪华海景套房',
-  description: '180度海景视野，配备独立阳台和按摩浴缸，是您度假的完美选择',
-  price: 588,
-  maxGuests: 2,
-  area: 45,
-  features: ['海景', '阳台', '按摩浴缸', '免费WiFi', '免费早餐']
+  id: null,
+  name: '',
+  description: '',
+  price: 0,
+  maxGuests: 1,
+  area: 0,
+  features: []
 })
 
 // 预订表单
@@ -211,6 +299,35 @@ const totalAmount = computed(() => {
   return subtotal.value
 })
 
+// 设施分类
+const facilitiesCategories = computed(() => {
+  const allFacilities = {
+    '基础': [
+      '无线网络', '电梯', '落地窗', '卧室-冷暖空调', '客厅-冷暖空调', '暖气',
+      '晾衣架', '电热水壶', '沙发', '电视', '冰箱', '洗衣机',
+      '空气净化器', '加湿器', '净水机'
+    ],
+    '卫浴': [
+      '热水', '独立卫浴', '电吹风', '洗浴用品', '牙具', '浴巾',
+      '毛巾', '浴缸', '智能马桶', '干湿分离'
+    ],
+    '厨房': [
+      '微波炉', '餐具', '刀具菜板', '烹饪锅具', '电磁炉', '燃气灶',
+      '洗涤用品', '电饭煲', '饮水机', '餐桌'
+    ]
+  }
+  
+  const userFacilities = roomInfo.value.features || []
+  
+  return Object.entries(allFacilities).map(([categoryName, facilities]) => ({
+    name: categoryName,
+    items: facilities.map(facility => ({
+      name: facility,
+      available: userFacilities.includes(facility)
+    }))
+  }))
+})
+
 // 日期禁用逻辑
 const disabledDate = (time) => {
   return time.getTime() < Date.now() - 8.64e7
@@ -224,6 +341,32 @@ const disabledCheckOutDate = (time) => {
 // 返回上一页
 const goBack = () => {
   router.go(-1)
+}
+
+// 预订页面图片轮播控制函数
+const prevBookingImage = () => {
+  if (roomInfo.value.imageList && roomInfo.value.imageList.length > 1) {
+    roomInfo.value.currentImageIndex = roomInfo.value.currentImageIndex > 0 
+      ? roomInfo.value.currentImageIndex - 1 
+      : roomInfo.value.imageList.length - 1
+    roomInfo.value.currentImage = roomInfo.value.imageList[roomInfo.value.currentImageIndex]
+  }
+}
+
+const nextBookingImage = () => {
+  if (roomInfo.value.imageList && roomInfo.value.imageList.length > 1) {
+    roomInfo.value.currentImageIndex = roomInfo.value.currentImageIndex < roomInfo.value.imageList.length - 1 
+      ? roomInfo.value.currentImageIndex + 1 
+      : 0
+    roomInfo.value.currentImage = roomInfo.value.imageList[roomInfo.value.currentImageIndex]
+  }
+}
+
+const setBookingImage = (index) => {
+  if (roomInfo.value.imageList && roomInfo.value.imageList.length > index) {
+    roomInfo.value.currentImageIndex = index
+    roomInfo.value.currentImage = roomInfo.value.imageList[index]
+  }
 }
 
 // 提交预订
@@ -268,13 +411,72 @@ const submitBooking = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   // 根据路由参数获取房间信息
   const roomId = route.params.id
   
-  // 这里可以调用API获取房间详情
-  // 暂时使用模拟数据
-  console.log('房间ID:', roomId)
+  if (!roomId) {
+    ElMessage.error('房间ID不存在')
+    router.push('/rooms')
+    return
+  }
+  
+  try {
+    loading.value = true
+    console.log('正在获取房间详情，房间ID:', roomId)
+    
+    const response = await getUserRoomById(roomId)
+    const roomData = response.data
+    
+    console.log('房间数据:', roomData)
+    
+    // 处理设施数据
+    let facilitiesArray = []
+    if (roomData.facilities && typeof roomData.facilities === 'string') {
+      try {
+        facilitiesArray = JSON.parse(roomData.facilities)
+      } catch (e) {
+        facilitiesArray = []
+      }
+    } else if (Array.isArray(roomData.facilities)) {
+      facilitiesArray = roomData.facilities
+    }
+    
+    // 处理图片数据
+    let imageList = []
+    let currentImage = null
+    if (roomData.images && typeof roomData.images === 'string') {
+      try {
+        imageList = JSON.parse(roomData.images)
+        currentImage = imageList.length > 0 ? imageList[0] : null
+      } catch (e) {
+        imageList = []
+        currentImage = null
+      }
+    }
+    
+    // 更新房间信息
+    roomInfo.value = {
+      id: roomData.id,
+      name: roomData.roomNumber + '号房 - ' + (roomData.roomTypeName || '标准房'),
+      description: roomData.description || '舒适温馨的房间，为您提供优质的住宿体验',
+      price: roomData.currentPrice || roomData.price || 0,
+      maxGuests: roomData.maxGuests || 2,
+      area: roomData.area || 0,
+      features: facilitiesArray,
+      imageList: imageList,
+      currentImage: currentImage,
+      currentImageIndex: 0,
+      bedType: roomData.bedType
+    }
+    
+  } catch (error) {
+    console.error('获取房间详情失败:', error)
+    ElMessage.error('获取房间信息失败')
+    router.push('/rooms')
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -301,137 +503,412 @@ onMounted(() => {
 }
 
 .booking-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 30px;
-  align-items: start;
+  .loading-container {
+    padding: 60px 20px;
+    text-align: center;
+  }
+  
+  .booking-card {
+    max-width: 1200px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
 }
 
-.room-section {
-  .room-info {
+// 房间图片区域
+.room-image-section {
+  width: 100%;
+  height: 300px;
+  position: relative;
+  overflow: hidden;
+  
+  .room-main-image {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     display: flex;
-    gap: 20px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
     
-    .room-image {
-      flex-shrink: 0;
-      width: 200px;
-      height: 150px;
+    p {
+      margin: 12px 0 0 0;
+      font-size: 16px;
+    }
+  }
+  
+  .image-controls {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    
+    .image-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: all 0.3s ease;
+      z-index: 2;
       
-      .image-placeholder {
-        width: 100%;
-        height: 100%;
-        background: #f5f5f5;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: #999;
-        
-        p {
-          margin: 8px 0 0 0;
-          font-size: 14px;
-        }
+      &:hover {
+        background: rgba(0, 0, 0, 0.8);
+        transform: translateY(-50%) scale(1.1);
+      }
+      
+      &.prev-btn {
+        left: 16px;
+      }
+      
+      &.next-btn {
+        right: 16px;
       }
     }
     
-    .room-details {
-      flex: 1;
+    .image-indicators {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      pointer-events: auto;
       
-      h3 {
-        margin: 0 0 12px 0;
-        font-size: 20px;
-        color: #333;
-      }
-      
-      .description {
-        margin: 0 0 16px 0;
-        color: #666;
-        line-height: 1.6;
-      }
-      
-      .features {
-        margin-bottom: 16px;
+      .indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        transition: all 0.3s ease;
         
-        .el-tag {
-          margin: 0 8px 8px 0;
+        &.active {
+          background: white;
+          transform: scale(1.2);
         }
-      }
-      
-      .room-specs {
-        display: flex;
-        gap: 20px;
-        color: #666;
-        font-size: 14px;
         
-        span {
-          display: flex;
-          align-items: center;
-          gap: 4px;
+        &:hover {
+          background: rgba(255, 255, 255, 0.8);
         }
       }
     }
   }
 }
 
-.booking-section {
-  margin-bottom: 30px;
+// 主要内容区域
+.main-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 40px;
+  padding: 30px;
 }
 
-.price-section {
-  .price-details {
-    .price-item {
+// 左侧区域
+.left-section {
+  .room-info-section {
+    margin-bottom: 30px;
+    
+    h2 {
+      margin: 0 0 16px 0;
+      font-size: 28px;
+      color: #333;
+      font-weight: 600;
+    }
+    
+    .room-description {
+      margin: 0 0 20px 0;
+      color: #666;
+      line-height: 1.6;
+      font-size: 16px;
+    }
+    
+    .room-specs {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #f0f0f0;
+      gap: 24px;
+      margin-bottom: 0;
       
-      &.subtotal {
-        font-weight: 500;
-        border-bottom: 2px solid #e0e0e0;
-      }
-      
-      &.total {
-        font-size: 18px;
-        font-weight: bold;
-        color: #e74c3c;
-        border-bottom: none;
-        padding-top: 16px;
+      .spec-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #666;
+        font-size: 15px;
+        
+        .el-icon {
+          color: #409eff;
+        }
       }
     }
   }
   
-  .booking-actions {
-    margin-top: 30px;
-    display: flex;
-    gap: 16px;
+  .booking-form-section {
+    background: #f8fffe;
+    border: 2px solid #10b981;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 30px 0;
     
-    .el-button {
-      flex: 1;
+    h3 {
+      margin: 0 0 20px 0;
+      font-size: 22px;
+      color: #10b981;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      &::before {
+        content: "📅";
+        font-size: 20px;
+      }
+    }
+    
+    .el-form {
+      .el-form-item {
+        margin-bottom: 18px;
+      }
+      
+      .el-form-item__label {
+        font-weight: 500;
+        color: #333;
+      }
+    }
+  }
+  
+  .room-facilities-section {
+    margin-top: 30px;
+    
+    h4 {
+      margin: 0 0 20px 0;
+      font-size: 18px;
+      color: #333;
+      font-weight: 600;
+    }
+    
+    .facilities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    
+    .facility-category {
+      .category-title {
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        color: #333;
+        font-weight: 600;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+      
+      .facility-items {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+      }
+      
+      .facility-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        
+        &.available {
+          background: #f0f9ff;
+          border: 1px solid #e0f2fe;
+          
+          .facility-icon {
+            color: #10b981;
+          }
+          
+          .facility-name {
+            color: #333;
+          }
+          
+          &:hover {
+            background: #e0f2fe;
+          }
+        }
+        
+        &.unavailable {
+          background: #fafafa;
+          border: 1px solid #f0f0f0;
+          
+          .facility-icon {
+            color: #d1d5db;
+          }
+          
+          .facility-name {
+            color: #9ca3af;
+          }
+        }
+        
+        .facility-icon {
+          font-size: 16px;
+          flex-shrink: 0;
+        }
+        
+        .facility-name {
+          font-size: 14px;
+          line-height: 1.4;
+        }
+      }
+    }
+  }
+}
+
+// 右侧区域
+.right-section {
+  .price-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 24px;
+    position: sticky;
+    top: 20px;
+    
+    h3 {
+      margin: 0 0 20px 0;
+      font-size: 18px;
+      color: #333;
+      font-weight: 600;
+    }
+    
+    .price-details {
+      .price-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #e9ecef;
+        
+        &.subtotal {
+          font-weight: 500;
+          border-bottom: 2px solid #dee2e6;
+          margin-top: 8px;
+        }
+        
+        &.total {
+          font-size: 20px;
+          font-weight: bold;
+          color: #e74c3c;
+          border-bottom: none;
+          padding-top: 16px;
+          margin-top: 8px;
+        }
+      }
+    }
+    
+    .booking-actions {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      
+      .el-button {
+        width: 100%;
+        height: 44px;
+        font-size: 16px;
+        font-weight: 500;
+      }
     }
   }
 }
 
 // 响应式设计
 @media (max-width: 768px) {
-  .booking-content {
-    grid-template-columns: 1fr;
-  }
-  
-  .room-info {
-    flex-direction: column !important;
-    
-    .room-image {
-      width: 100% !important;
-      height: 200px !important;
-    }
+  .container {
+    padding: 16px;
   }
   
   .booking-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    
+    h1 {
+      font-size: 24px;
+    }
+  }
+  
+  .room-image-section {
+    height: 250px;
+  }
+  
+  .main-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .left-section {
+    .room-info-section {
+      margin-bottom: 30px;
+      
+      h2 {
+        font-size: 24px;
+      }
+      
+      .room-specs {
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      
+      .room-facilities {
+        .facilities-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+        
+        .facility-items {
+          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+          gap: 8px;
+        }
+      }
+    }
+  }
+  
+  .right-section {
+    .price-card {
+      position: static;
+      margin-top: 20px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .booking-card {
+    margin: 0 -16px;
+    border-radius: 0;
+  }
+  
+  .main-content {
+    padding: 16px;
+  }
+  
+  .room-specs {
+    flex-direction: column !important;
+    gap: 12px !important;
   }
 }
 </style>

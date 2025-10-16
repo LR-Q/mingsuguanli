@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.yxly.dto.request.LoginRequest;
 import com.yxly.dto.request.RegisterRequest;
 import com.yxly.dto.request.ResetPasswordRequest;
+import com.yxly.dto.request.ChangePasswordRequest;
 import com.yxly.dto.response.LoginResponse;
 import com.yxly.entity.SysUser;
 import com.yxly.exception.BusinessException;
@@ -275,5 +276,46 @@ public class AuthServiceImpl implements AuthService {
                 .eq(SysUser::getPhone, phone)
                 .eq(SysUser::getDeleted, 0)
         ) > 0;
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changePassword(String token, ChangePasswordRequest request) {
+        log.info("用户修改密码请求");
+        
+        // 1. 从JWT token中获取用户名
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+        if (!StringUtils.hasText(username)) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "无效的令牌");
+        }
+        
+        // 2. 查找用户
+        SysUser user = findByAccount(username);
+        if (user == null) {
+            throw new BusinessException(ResultCode.USER_NOT_FOUND, "用户不存在");
+        }
+        
+        // 3. 验证当前密码
+        boolean passwordMatches = passwordEncoder.matches(request.getOldPassword(), user.getPassword());
+        if (!passwordMatches) {
+            throw new BusinessException(ResultCode.LOGIN_FAILED, "当前密码错误");
+        }
+        
+        // 4. 检查新密码是否与当前密码相同
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "新密码不能与当前密码相同");
+        }
+        
+        // 5. 更新密码
+        String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+        user.setPassword(encodedNewPassword);
+        user.setUpdateTime(LocalDateTime.now());
+        
+        int updateResult = userMapper.updateById(user);
+        if (updateResult <= 0) {
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "密码修改失败，请稍后重试");
+        }
+        
+        log.info("用户密码修改成功: username={}", user.getUsername());
     }
 }

@@ -70,3 +70,12 @@ export function checkPhone(phone) {
     params: { phone }
   })
 }
+
+// 修改密码
+export function changePassword(data) {
+  return request({
+    url: '/api/v1/auth/change-password',
+    method: 'POST',
+    data
+  })
+}

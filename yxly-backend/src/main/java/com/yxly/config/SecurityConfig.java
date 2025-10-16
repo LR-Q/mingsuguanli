@@ -89,8 +89,14 @@ public class SecurityConfig {
                 .antMatchers("/druid/**").permitAll()
                 .antMatchers("/actuator/**").permitAll()
                 .antMatchers("/error").permitAll()
-                .antMatchers(HttpMethod.GET, "/v1/rooms").permitAll()
-                .antMatchers(HttpMethod.GET, "/v1/rooms/{id}").permitAll()
+                .antMatchers(HttpMethod.GET, "/v1/rooms/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/v1/admin/rooms/types").permitAll()  // 临时允许房型接口访问
+                .antMatchers("/v1/admin/files/**").permitAll()  // 临时允许文件上传接口访问
+                .antMatchers("/v1/admin/recharge/**").permitAll()  // 临时允许管理员充值管理接口访问
+                .antMatchers("/v1/admin/withdraw/**").permitAll()  // 临时允许管理员提现管理接口访问
+                .antMatchers("/v1/user/recharge/**").permitAll()  // 临时允许用户充值接口访问（调试用）
+                .antMatchers("/v1/user/info").permitAll()  // 临时允许用户信息接口访问（调试用）
+                .antMatchers("/v1/user/balance").permitAll()  // 临时允许用户余额接口访问（调试用）
                 // 需要认证的接口
                 .anyRequest().authenticated()
             .and()

@@ -67,7 +67,11 @@ public enum ResultCode {
     // 文件相关错误 106xx
     FILE_UPLOAD_FAILED(10601, "文件上传失败"),
     FILE_TYPE_NOT_SUPPORTED(10602, "文件类型不支持"),
-    FILE_SIZE_EXCEEDED(10603, "文件大小超出限制");
+    FILE_SIZE_EXCEEDED(10603, "文件大小超出限制"),
+    
+    // 通用数据错误
+    DATA_NOT_FOUND(10701, "数据不存在"),
+    OPERATION_FAILED(10702, "操作失败");
     
     private final Integer code;
     private final String message;

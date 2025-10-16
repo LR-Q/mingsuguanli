@@ -15,37 +15,17 @@
         class="sidebar-menu"
       >
         <template v-for="route in menuRoutes" :key="route.path">
-          <el-sub-menu 
-            v-if="route.children && route.children.length > 1" 
-            :index="route.path"
-          >
-            <template #title>
-              <el-icon v-if="route.meta?.icon">
-                <component :is="route.meta.icon" />
-              </el-icon>
-              <span>{{ route.meta?.title }}</span>
-            </template>
-            
-            <el-menu-item
-              v-for="child in route.children"
-              :key="child.path"
-              :index="child.path"
-              v-show="!child.meta?.hideInMenu"
+          <template v-for="child in route.children" :key="child.path">
+            <el-menu-item 
+              v-if="!child.meta?.hideInMenu"
+              :index="route.path + '/' + child.path"
             >
-              {{ child.meta?.title }}
+              <el-icon v-if="child.meta?.icon">
+                <component :is="child.meta.icon" />
+              </el-icon>
+              <template #title>{{ child.meta?.title }}</template>
             </el-menu-item>
-          </el-sub-menu>
-          
-          <el-menu-item 
-            v-else 
-            :index="getMenuIndex(route)"
-            v-show="!route.meta?.hideInMenu"
-          >
-            <el-icon v-if="route.meta?.icon">
-              <component :is="route.meta.icon" />
-            </el-icon>
-            <template #title>{{ getMenuTitle(route) }}</template>
-          </el-menu-item>
+          </template>
         </template>
       </el-menu>
     </el-aside>
@@ -89,8 +69,7 @@
             
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                <el-dropdown-item command="settings">系统设置</el-dropdown-item>
+                <el-dropdown-item command="dashboard">管理仪表盘</el-dropdown-item>
                 <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -133,7 +112,11 @@ const userAvatar = computed(() => {
 
 const menuRoutes = computed(() => {
   return router.getRoutes().filter(route => {
-    return route.meta?.requiresAuth && !route.meta?.hideInMenu && route.children
+    // 只显示管理员路由，必须有 requiresAdmin 标记
+    return route.meta?.requiresAuth && 
+           route.meta?.requiresAdmin &&
+           !route.meta?.hideInMenu && 
+           route.children
   })
 })
 
@@ -166,11 +149,8 @@ const getMenuTitle = (route) => {
 
 const handleCommand = async (command) => {
   switch (command) {
-    case 'profile':
-      router.push('/profile')
-      break
-    case 'settings':
-      router.push('/settings')
+    case 'dashboard':
+      router.push('/admin/dashboard')
       break
     case 'logout':
       await handleLogout()
