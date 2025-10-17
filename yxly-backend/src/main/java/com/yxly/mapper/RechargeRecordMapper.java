@@ -32,3 +32,5 @@ public interface RechargeRecordMapper extends BaseMapper<RechargeRecord> {
             @Param("userId") Long userId
     );
 }
+
+

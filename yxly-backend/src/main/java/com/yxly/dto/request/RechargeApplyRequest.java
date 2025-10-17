@@ -37,3 +37,5 @@ public class RechargeApplyRequest {
      */
     private String userRemark;
 }
+
+

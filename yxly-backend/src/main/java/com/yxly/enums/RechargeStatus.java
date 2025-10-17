@@ -29,7 +29,7 @@ public enum RechargeStatus {
     private final String description;
     
     /**
-     * 根据状态码获取枚举
+     * 根据code获取枚举
      */
     public static RechargeStatus getByCode(Integer code) {
         if (code == null) {
