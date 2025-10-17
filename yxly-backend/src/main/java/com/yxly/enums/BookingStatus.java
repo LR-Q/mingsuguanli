@@ -15,7 +15,8 @@ public enum BookingStatus {
     CONFIRMED(2, "已确认"),
     CHECKED_IN(3, "已入住"),
     CHECKED_OUT(4, "已退房"),
-    CANCELLED(5, "已取消");
+    CANCELLED(5, "已取消"),
+    CANCELLED_BY_ADMIN(6, "被取消");
     
     private final Integer code;
     private final String desc;

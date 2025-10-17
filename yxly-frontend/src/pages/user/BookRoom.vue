@@ -229,6 +229,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Picture, User, Expand, ArrowLeft, Check, Close } from '@element-plus/icons-vue'
 import { getUserRoomById } from '@/api/modules/userRoom'
+import { createBooking } from '@/api/modules/booking'
 
 const router = useRouter()
 const route = useRoute()
@@ -393,18 +394,28 @@ const submitBooking = async () => {
     
     submitting.value = true
     
-    // 模拟提交预订
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    // 调用API提交预订
+    const bookingData = {
+      roomId: roomInfo.value.id,
+      checkInDate: bookingForm.checkIn,
+      checkOutDate: bookingForm.checkOut,
+      guestsCount: bookingForm.guests,
+      contactName: bookingForm.contactName,
+      contactPhone: bookingForm.contactPhone,
+      specialRequests: bookingForm.specialRequests
+    }
+    
+    await createBooking(bookingData)
     
     ElMessage.success('预订成功！我们会尽快与您联系确认')
     
-    // 跳转到订单页面或首页
-    router.push('/orders')
+    // 跳转到订单页面
+    router.push('/user-center/orders')
     
   } catch (error) {
     if (error !== 'cancel') {
       console.error('预订失败:', error)
-      ElMessage.error('预订失败，请重试')
+      ElMessage.error(error.message || '预订失败，请重试')
     }
   } finally {
     submitting.value = false

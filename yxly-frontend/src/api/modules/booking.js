@@ -1,9 +1,18 @@
 import request from '@/utils/request'
 
-// 获取订单列表
+// 获取我的订单列表（用户端）
+export function getMyBookingList(params) {
+  return request({
+    url: '/api/user/bookings/my',
+    method: 'GET',
+    params
+  })
+}
+
+// 获取订单列表（管理端）
 export function getBookingList(params) {
   return request({
-    url: '/v1/bookings',
+    url: '/api/admin/bookings',
     method: 'GET',
     params
   })
@@ -12,7 +21,7 @@ export function getBookingList(params) {
 // 获取订单详情
 export function getBookingDetail(id) {
   return request({
-    url: `/v1/bookings/${id}`,
+    url: `/api/user/bookings/${id}`,
     method: 'GET'
   })
 }
@@ -20,7 +29,7 @@ export function getBookingDetail(id) {
 // 创建订单
 export function createBooking(data) {
   return request({
-    url: '/v1/bookings',
+    url: '/api/user/bookings',
     method: 'POST',
     data
   })
@@ -29,44 +38,51 @@ export function createBooking(data) {
 // 更新订单
 export function updateBooking(id, data) {
   return request({
-    url: `/v1/bookings/${id}`,
+    url: `/api/admin/bookings/${id}`,
     method: 'PUT',
     data
   })
 }
 
-// 取消订单
-export function cancelBooking(id, data) {
+// 取消订单（用户端）
+export function cancelBooking(id, reason) {
   return request({
-    url: `/v1/bookings/${id}/cancel`,
+    url: `/api/user/bookings/${id}/cancel`,
     method: 'POST',
-    data
+    params: { reason }
   })
 }
 
-// 确认订单
-export function confirmBooking(id) {
+// 取消订单（管理员端）
+export function adminCancelBooking(id, reason) {
   return request({
-    url: `/v1/bookings/${id}/confirm`,
+    url: `/api/admin/bookings/${id}/cancel`,
+    method: 'POST',
+    params: { reason }
+  })
+}
+
+// 确认订单（管理员端）
+export function adminConfirmBooking(id) {
+  return request({
+    url: `/api/admin/bookings/${id}/confirm`,
     method: 'POST'
   })
 }
 
-// 办理入住
-export function checkInBooking(id, data) {
+// 办理入住（管理员端）
+export function checkInBooking(id) {
   return request({
-    url: `/v1/bookings/${id}/checkin`,
-    method: 'POST',
-    data
+    url: `/api/admin/bookings/${id}/check-in`,
+    method: 'POST'
   })
 }
 
-// 办理退房
-export function checkOutBooking(id, data) {
+// 办理退房（管理员端）
+export function checkOutBooking(id) {
   return request({
-    url: `/v1/bookings/${id}/checkout`,
-    method: 'POST',
-    data
+    url: `/api/admin/bookings/${id}/check-out`,
+    method: 'POST'
   })
 }
 

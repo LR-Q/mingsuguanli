@@ -1,3 +1,4 @@
+com\yxly\dto\request\BookingCreateRequest.class
 com\yxly\entity\BookingOrder.class
 com\yxly\common\ResultCode.class
 com\yxly\service\impl\CustomerServiceImpl.class
@@ -9,6 +10,7 @@ com\yxly\dto\request\RoomCreateRequest.class
 com\yxly\dto\request\RoomUpdateRequest.class
 com\yxly\exception\GlobalExceptionHandler.class
 com\yxly\dto\response\WithdrawRecordResponse.class
+com\yxly\entity\FinancialRecord.class
 com\yxly\enums\RoomStatus.class
 com\yxly\entity\SysRole.class
 com\yxly\service\impl\AuthServiceImpl.class
@@ -20,9 +22,12 @@ com\yxly\service\impl\WithdrawServiceImpl.class
 com\yxly\dto\response\LoginResponse$UserInfo.class
 com\yxly\config\PasswordEncoderConfig.class
 com\yxly\dto\request\RechargeAuditRequest.class
+com\yxly\service\FinancialRecordService.class
 com\yxly\config\SecurityConfig.class
 com\yxly\controller\admin\RoomController.class
 com\yxly\controller\admin\CustomerController.class
+com\yxly\service\BookingOrderService.class
+com\yxly\mapper\FinancialRecordMapper.class
 com\yxly\service\impl\MinioServiceImpl.class
 com\yxly\mapper\RechargeRecordMapper.class
 com\yxly\dto\response\LoginResponse.class
@@ -41,6 +46,7 @@ com\yxly\service\RoomService.class
 com\yxly\config\MinioConfig.class
 com\yxly\controller\user\UserRoomController.class
 com\yxly\dto\response\CustomerResponse.class
+com\yxly\service\impl\BookingOrderServiceImpl.class
 com\yxly\exception\BusinessException.class
 com\yxly\mapper\SysRoleMapper.class
 com\yxly\enums\WithdrawStatus.class
@@ -54,9 +60,14 @@ com\yxly\security\UserDetailsServiceImpl.class
 com\yxly\dto\request\WithdrawAuditRequest.class
 com\yxly\config\MyBatisPlusConfig.class
 com\yxly\dto\request\ChangePasswordRequest.class
+com\yxly\controller\user\FinancialRecordController.class
+com\yxly\controller\user\UserBookingController.class
+com\yxly\service\impl\FinancialRecordServiceImpl.class
 com\yxly\entity\SysUser.class
 com\yxly\service\impl\RechargeServiceImpl.class
+com\yxly\dto\response\BookingOrderResponse.class
 com\yxly\security\JwtAuthenticationFilter.class
+com\yxly\controller\admin\BookingController.class
 com\yxly\service\WithdrawService.class
 com\yxly\mapper\RoomInfoMapper.class
 com\yxly\controller\admin\MinioTestController.class

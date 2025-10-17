@@ -68,7 +68,7 @@
             :key="tab.value"
             :type="activeStatus === tab.value ? 'primary' : ''"
             :plain="activeStatus !== tab.value"
-            @click="activeStatus = tab.value"
+            @click="handleStatusChange(tab.value)"
           >
             {{ tab.label }}
           </el-button>
@@ -170,7 +170,7 @@
           </div>
           <div class="order-actions">
             <el-button 
-              v-if="order.status === 'pending'" 
+              v-if="order.status === 1" 
               type="danger" 
               plain 
               size="small"
@@ -180,7 +180,7 @@
             </el-button>
             
             <el-button 
-              v-if="order.status === 'confirmed'" 
+              v-if="order.status === 2" 
               type="primary" 
               plain 
               size="small"
@@ -190,7 +190,7 @@
             </el-button>
             
             <el-button 
-              v-if="order.status === 'completed'" 
+              v-if="order.status === 4" 
               type="success" 
               plain 
               size="small"
@@ -200,7 +200,7 @@
             </el-button>
             
             <el-button 
-              v-if="order.status === 'cancelled' && order.refundStatus === 'pending'" 
+              v-if="order.status === 5 && order.refundStatus === 'pending'" 
               type="warning" 
               plain 
               size="small"
@@ -310,6 +310,7 @@ import {
   Search, 
   Picture 
 } from '@element-plus/icons-vue'
+import { getMyBookingList, cancelBooking } from '@/api/modules/booking'
 
 // 响应式数据
 const activeStatus = ref('all')
@@ -318,26 +319,31 @@ const dateRange = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const totalOrders = ref(0)
+const loading = ref(false)
 
 const showOrderDetail = ref(false)
 const showReview = ref(false)
 const selectedOrder = ref(null)
 
+// 订单数据
+const orders = ref([])
+
 // 订单统计
 const orderStats = reactive({
-  pending: 2,
-  confirmed: 3,
-  completed: 8,
-  cancelled: 1
+  pending: 0,
+  confirmed: 0,
+  completed: 0,
+  cancelled: 0
 })
 
 // 状态标签
 const statusTabs = [
   { label: '全部订单', value: 'all' },
-  { label: '待确认', value: 'pending' },
-  { label: '已确认', value: 'confirmed' },
-  { label: '已完成', value: 'completed' },
-  { label: '已取消', value: 'cancelled' }
+  { label: '待确认', value: 1 },
+  { label: '已确认', value: 2 },
+  { label: '已完成', value: 4 },
+  { label: '已取消', value: 5 },
+  { label: '被取消', value: 6 }
 ]
 
 // 评价表单
@@ -347,111 +353,9 @@ const reviewForm = reactive({
   anonymous: false
 })
 
-// 模拟订单数据
-const orders = ref([
-  {
-    id: 1,
-    orderNumber: 'YX202410150001',
-    roomName: '海景豪华大床房',
-    roomType: '豪华大床房',
-    roomImage: '/api/placeholder/300/200',
-    roomPrice: 388.00,
-    checkInDate: '2024-10-20',
-    checkOutDate: '2024-10-22',
-    nights: 2,
-    guests: 2,
-    contactName: '张三',
-    contactPhone: '13800138000',
-    specialRequests: '需要婴儿床',
-    totalAmount: 776.00,
-    status: 'confirmed',
-    createTime: '2024-10-15 14:30:00'
-  },
-  {
-    id: 2,
-    orderNumber: 'YX202410140001',
-    roomName: '温馨标准双人间',
-    roomType: '标准双人间',
-    roomImage: '/api/placeholder/300/200',
-    roomPrice: 288.00,
-    checkInDate: '2024-10-18',
-    checkOutDate: '2024-10-19',
-    nights: 1,
-    guests: 2,
-    contactName: '李四',
-    contactPhone: '13800138001',
-    specialRequests: '',
-    totalAmount: 288.00,
-    status: 'pending',
-    createTime: '2024-10-14 09:15:00'
-  },
-  {
-    id: 3,
-    orderNumber: 'YX202410130001',
-    roomName: '商务套房',
-    roomType: '商务套房',
-    roomImage: '/api/placeholder/300/200',
-    roomPrice: 588.00,
-    checkInDate: '2024-10-10',
-    checkOutDate: '2024-10-12',
-    nights: 2,
-    guests: 1,
-    contactName: '王五',
-    contactPhone: '13800138002',
-    specialRequests: '需要安静房间',
-    totalAmount: 1176.00,
-    status: 'completed',
-    createTime: '2024-10-13 16:45:00'
-  },
-  {
-    id: 4,
-    orderNumber: 'YX202410120001',
-    roomName: '经济型单人间',
-    roomType: '经济单人间',
-    roomImage: '/api/placeholder/300/200',
-    roomPrice: 188.00,
-    checkInDate: '2024-10-15',
-    checkOutDate: '2024-10-16',
-    nights: 1,
-    guests: 1,
-    contactName: '赵六',
-    contactPhone: '13800138003',
-    specialRequests: '',
-    totalAmount: 188.00,
-    status: 'cancelled',
-    refundStatus: 'completed',
-    createTime: '2024-10-12 11:20:00'
-  }
-])
-
 // 计算属性
 const filteredOrders = computed(() => {
-  let result = orders.value
-
-  // 按状态筛选
-  if (activeStatus.value !== 'all') {
-    result = result.filter(order => order.status === activeStatus.value)
-  }
-
-  // 按关键词搜索
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
-    result = result.filter(order => 
-      order.orderNumber.toLowerCase().includes(keyword) ||
-      order.roomName.toLowerCase().includes(keyword)
-    )
-  }
-
-  // 按日期范围筛选
-  if (dateRange.value && dateRange.value.length === 2) {
-    const [startDate, endDate] = dateRange.value
-    result = result.filter(order => {
-      const orderDate = new Date(order.createTime)
-      return orderDate >= startDate && orderDate <= endDate
-    })
-  }
-
-  return result
+  return orders.value
 })
 
 // 方法
@@ -469,52 +373,57 @@ const formatDateTime = (dateStr) => {
 
 const getStatusName = (status) => {
   const names = {
-    pending: '待确认',
-    confirmed: '已确认',
-    completed: '已完成',
-    cancelled: '已取消'
+    1: '待确认',
+    2: '已确认',
+    3: '已入住',
+    4: '已完成',
+    5: '已取消',
+    6: '被取消'
   }
-  return names[status] || status
+  return names[status] || '未知'
 }
 
 const getStatusColor = (status) => {
   const colors = {
-    pending: 'warning',
-    confirmed: 'primary',
-    completed: 'success',
-    cancelled: 'danger'
+    1: 'warning',
+    2: 'primary',
+    3: 'info',
+    4: 'success',
+    5: 'danger',
+    6: 'danger'
   }
   return colors[status] || ''
 }
 
 const handleSizeChange = (size) => {
   pageSize.value = size
-  // 重新加载数据
+  loadOrders()
 }
 
 const handleCurrentChange = (page) => {
   currentPage.value = page
-  // 重新加载数据
+  loadOrders()
 }
 
 const cancelOrder = async (order) => {
   try {
-    await ElMessageBox.confirm('确定要取消这个订单吗？', '取消订单', {
+    const { value: reason } = await ElMessageBox.prompt('请输入取消原因（可选）', '取消订单', {
       confirmButtonText: '确定取消',
       cancelButtonText: '暂不取消',
-      type: 'warning'
+      inputPattern: /.*/,
+      inputPlaceholder: '请输入取消原因'
     })
 
-    // 这里调用取消订单API
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    order.status = 'cancelled'
-    orderStats.pending--
-    orderStats.cancelled++
-
+    await cancelBooking(order.id, reason || '用户主动取消')
+    
     ElMessage.success('订单已取消')
+    
+    // 重新加载订单列表
+    loadOrders()
   } catch (error) {
-    // 用户取消操作
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '取消订单失败')
+    }
   }
 }
 
@@ -556,8 +465,86 @@ const submitReview = async () => {
   }
 }
 
+// 加载订单列表
+const loadOrders = async () => {
+  try {
+    loading.value = true
+    
+    const params = {
+      current: currentPage.value,
+      size: pageSize.value
+    }
+    
+    // 如果选择了具体状态，传递状态参数
+    if (activeStatus.value !== 'all') {
+      params.status = activeStatus.value
+    }
+    
+    const response = await getMyBookingList(params)
+    
+    // 处理响应数据
+    if (response.data && response.data.records) {
+      orders.value = response.data.records.map(order => ({
+        id: order.id,
+        orderNumber: order.orderNo,
+        roomName: order.roomName || '房间',
+        roomType: order.roomType || '',
+        roomImage: '/api/placeholder/300/200',
+        roomPrice: order.roomPrice,
+        checkInDate: order.checkInDate,
+        checkOutDate: order.checkOutDate,
+        nights: order.nights,
+        guests: order.guestsCount,
+        contactName: order.contactName,
+        contactPhone: order.contactPhone,
+        specialRequests: order.specialRequests,
+        totalAmount: order.totalAmount,
+        status: order.bookingStatus,
+        createTime: order.createTime,
+        cancelReason: order.cancelReason,
+        cancelTime: order.cancelTime
+      }))
+      
+      totalOrders.value = response.data.total
+      
+      // 更新统计数据
+      updateStats()
+    }
+  } catch (error) {
+    console.error('加载订单失败:', error)
+    ElMessage.error('加载订单失败，请重试')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 更新统计数据
+const updateStats = async () => {
+  try {
+    // 获取所有订单统计
+    const allResponse = await getMyBookingList({ current: 1, size: 1000 })
+    if (allResponse.data && allResponse.data.records) {
+      const allOrders = allResponse.data.records
+      orderStats.pending = allOrders.filter(o => o.bookingStatus === 1).length
+      orderStats.confirmed = allOrders.filter(o => o.bookingStatus === 2).length
+      orderStats.completed = allOrders.filter(o => o.bookingStatus === 4).length
+      // 已取消和被取消都计入已取消统计
+      orderStats.cancelled = allOrders.filter(o => o.bookingStatus === 5 || o.bookingStatus === 6).length
+    }
+  } catch (error) {
+    console.error('更新统计失败:', error)
+  }
+}
+
+// 监听状态变化
+const handleStatusChange = (status) => {
+  activeStatus.value = status
+  currentPage.value = 1
+  loadOrders()
+}
+
 onMounted(() => {
-  totalOrders.value = orders.value.length
+  loadOrders()
 })
 </script>
 

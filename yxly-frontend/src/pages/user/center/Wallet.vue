@@ -210,6 +210,7 @@ import {
 } from '@element-plus/icons-vue'
 import { applyRecharge, uploadPaymentProof, getUserRechargeRecords, applyWithdraw, getUserWithdrawRecords } from '@/api/modules/recharge'
 import { getUserBalance } from '@/api/modules/user'
+import { getMyFinancialRecords } from '@/api/modules/financial'
 
 // 响应式数据
 const showRecharge = ref(false)
@@ -410,11 +411,11 @@ const handleRecharge = async () => {
   }
 }
 
-// 加载充值记录和提现记录
+// 加载充值和提现记录
 const loadRechargeRecords = async () => {
   try {
-    // 并行加载充值记录和提现记录
-    const [rechargeResponse, withdrawResponse] = await Promise.all([
+    // 并行加载充值记录、提现记录和财务记录
+    const [rechargeResponse, withdrawResponse, financialResponse] = await Promise.all([
       getUserRechargeRecords({
         current: currentPage.value,
         size: pageSize.value
@@ -422,6 +423,10 @@ const loadRechargeRecords = async () => {
       getUserWithdrawRecords({
         current: currentPage.value,
         size: pageSize.value
+      }),
+      getMyFinancialRecords({
+        current: currentPage.value,
+        size: 1000 // 获取更多记录
       })
     ])
     
@@ -445,8 +450,32 @@ const loadRechargeRecords = async () => {
       createTime: record.applyTime
     }))
     
+    // 将财务记录转换为交易记录格式
+    const financialTransactions = (financialResponse.data.records || []).map(record => {
+      let type = 'consume'  // 默认消费
+      let description = record.description || '交易'
+      
+      // 根据category判断类型
+      if (record.category === 'CONSUMPTION') {
+        type = 'consume'
+        description = record.description || '订房消费'
+      } else if (record.category === 'REFUND') {
+        type = 'refund'
+        description = record.description || '退款'
+      }
+      
+      return {
+        id: record.recordNo || `F${record.id}`,
+        type: type,
+        amount: record.amount,
+        description: description,
+        status: 'success',
+        createTime: record.createTime || record.recordDate  // 使用创建时间或记录日期
+      }
+    })
+    
     // 合并所有交易记录并按时间排序
-    const allTransactions = [...rechargeTransactions, ...withdrawTransactions, ...mockTransactions]
+    const allTransactions = [...rechargeTransactions, ...withdrawTransactions, ...financialTransactions, ...mockTransactions]
     allTransactions.sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
     
     transactions.value = allTransactions
