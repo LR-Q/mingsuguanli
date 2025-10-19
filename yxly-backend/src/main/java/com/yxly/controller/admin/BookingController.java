@@ -49,6 +49,19 @@ public class BookingController {
         }
     }
     
+    @Operation(summary = "获取订单详情")
+    @GetMapping("/{id}")
+    public Result<BookingOrderResponse> getBookingById(@PathVariable Long id) {
+        try {
+            log.info("管理员查询订单详情: id={}", id);
+            BookingOrderResponse booking = bookingOrderService.getBookingDetailById(id);
+            return Result.success(booking);
+        } catch (Exception e) {
+            log.error("查询订单详情失败", e);
+            return Result.error(e.getMessage());
+        }
+    }
+    
     @Operation(summary = "管理员取消订单")
     @PostMapping("/{id}/cancel")
     public Result<Void> cancelBooking(

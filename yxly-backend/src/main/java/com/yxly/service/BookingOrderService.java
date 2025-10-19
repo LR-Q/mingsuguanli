@@ -25,9 +25,14 @@ public interface BookingOrderService {
     IPage<BookingOrderResponse> getAllBookingPage(Long current, Long size, String orderNo, String customerName, String roomNumber, Integer status);
     
     /**
-     * 获取订单详情
+     * 获取订单详情（用户端）
      */
     BookingOrderResponse getBookingById(Long id, Long userId);
+    
+    /**
+     * 获取订单详情（管理员端）
+     */
+    BookingOrderResponse getBookingDetailById(Long id);
     
     /**
      * 取消订单（用户端）

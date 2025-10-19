@@ -36,7 +36,7 @@
             />
           </el-form-item>
           <el-form-item label="订单状态">
-            <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
+            <el-select v-model="searchForm.status" placeholder="请选择状态" clearable style="width: 200px">
               <el-option label="待确认" value="pending" />
               <el-option label="已确认" value="confirmed" />
               <el-option label="已入住" value="checkedin" />

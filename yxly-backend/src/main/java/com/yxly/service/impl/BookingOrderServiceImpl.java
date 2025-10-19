@@ -88,6 +88,24 @@ public class BookingOrderServiceImpl implements BookingOrderService {
             throw new BusinessException(ResultCode.PARAM_ERROR, "入住天数必须大于0");
         }
         
+        // 🔒 关键：检查房间在该时间段内是否已被预订
+        int conflictCount = bookingOrderMapper.countConflictOrders(
+            request.getRoomId(),
+            request.getCheckInDate(),
+            request.getCheckOutDate()
+        );
+        
+        if (conflictCount > 0) {
+            log.warn("房间预订冲突: roomId={}, checkIn={}, checkOut={}, 冲突订单数={}", 
+                request.getRoomId(), request.getCheckInDate(), request.getCheckOutDate(), conflictCount);
+            throw new BusinessException(ResultCode.OPERATION_FAILED, 
+                String.format("该房间在 %s 至 %s 期间已被预订，请选择其他时间或房间", 
+                    request.getCheckInDate(), request.getCheckOutDate()));
+        }
+        
+        log.info("房间可预订: roomId={}, checkIn={}, checkOut={}", 
+            request.getRoomId(), request.getCheckInDate(), request.getCheckOutDate());
+        
         // 计算总金额
         BigDecimal roomPrice = room.getCurrentPrice() != null ? room.getCurrentPrice() : room.getBasePrice();
         BigDecimal totalAmount = roomPrice.multiply(BigDecimal.valueOf(nights));
@@ -286,6 +304,39 @@ public class BookingOrderServiceImpl implements BookingOrderService {
         // 验证订单所属用户
         if (!order.getCustomerId().equals(userId)) {
             throw new BusinessException(ResultCode.FORBIDDEN, "无权访问该订单");
+        }
+        
+        BookingOrderResponse response = new BookingOrderResponse();
+        BeanUtils.copyProperties(order, response);
+        
+        // 获取房间信息
+        RoomInfo room = roomInfoMapper.selectById(order.getRoomId());
+        if (room != null) {
+            response.setRoomNumber(room.getRoomNumber());
+            
+            if (room.getRoomTypeId() != null) {
+                RoomType roomType = roomTypeMapper.selectById(room.getRoomTypeId());
+                if (roomType != null) {
+                    response.setRoomType(roomType.getTypeName());
+                    response.setRoomName(room.getRoomNumber() + "号房 - " + roomType.getTypeName());
+                }
+            }
+        }
+        
+        // 设置状态名称
+        response.setBookingStatusName(BOOKING_STATUS_MAP.get(order.getBookingStatus()));
+        response.setPaymentStatusName(PAYMENT_STATUS_MAP.get(order.getPaymentStatus()));
+        
+        return response;
+    }
+    
+    @Override
+    public BookingOrderResponse getBookingDetailById(Long id) {
+        log.info("管理员获取订单详情: id={}", id);
+        
+        BookingOrder order = bookingOrderMapper.selectById(id);
+        if (order == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "订单不存在");
         }
         
         BookingOrderResponse response = new BookingOrderResponse();

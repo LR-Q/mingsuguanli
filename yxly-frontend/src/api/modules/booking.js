@@ -18,10 +18,18 @@ export function getBookingList(params) {
   })
 }
 
-// 获取订单详情
+// 获取订单详情（用户端）
 export function getBookingDetail(id) {
   return request({
     url: `/api/user/bookings/${id}`,
+    method: 'GET'
+  })
+}
+
+// 获取订单详情（管理员端）
+export function getAdminBookingDetail(id) {
+  return request({
+    url: `/api/admin/bookings/${id}`,
     method: 'GET'
   })
 }
