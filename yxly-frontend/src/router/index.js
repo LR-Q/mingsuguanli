@@ -263,6 +263,17 @@ const adminRoutes = [
           requiresAdmin: true
         }
       },
+      {
+        path: 'location',
+        name: 'LocationManagement',
+        component: () => import('@/pages/admin/LocationManagement.vue'),
+        meta: {
+          title: '位置管理',
+          icon: 'Location',
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
       // 隐藏的子页面路由
       {
         path: 'rooms/create',

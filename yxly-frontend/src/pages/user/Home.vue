@@ -27,7 +27,7 @@
     <!-- 快速预订区域 -->
     <section class="booking-section" ref="roomsSection">
       <div class="container">
-        <h2>快速预订</h2>
+        <h2>快速预订（测试缓存已清除）</h2>
         <div class="booking-form">
           <el-form :model="bookingForm" inline>
             <el-form-item label="入住日期">
@@ -61,42 +61,6 @@
               </el-button>
             </el-form-item>
           </el-form>
-        </div>
-      </div>
-    </section>
-
-    <!-- 特色房型展示 -->
-    <section class="rooms-showcase">
-      <div class="container">
-        <h2>精选房型</h2>
-        <div class="rooms-grid">
-          <div v-for="room in featuredRooms" :key="room.id" class="room-card">
-            <div class="room-image">
-              <div class="image-placeholder">
-                <el-icon size="40"><Picture /></el-icon>
-              </div>
-              <div class="room-badge">{{ room.badge }}</div>
-            </div>
-            <div class="room-info">
-              <h3>{{ room.name }}</h3>
-              <p class="room-desc">{{ room.description }}</p>
-              <div class="room-features">
-                <span v-for="feature in room.features" :key="feature" class="feature-tag">
-                  {{ feature }}
-                </span>
-              </div>
-              <div class="room-footer">
-                <div class="price">
-                  <span class="price-label">￥</span>
-                  <span class="price-value">{{ room.price }}</span>
-                  <span class="price-unit">/晚</span>
-                </div>
-                <el-button type="primary" @click="bookRoom(room)">
-                  立即预订
-                </el-button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -139,23 +103,33 @@
       </div>
     </section>
 
+    <!-- 民宿位置地图 -->
+    <section class="location-section">
+      <div class="container">
+        <h2>民宿位置</h2>
+        <div class="location-map-wrapper">
+          <div id="user-location-map" class="location-map"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- 联系我们 -->
     <section class="contact-section">
       <div class="container">
+        <h2>联系我们</h2>
         <div class="contact-content">
           <div class="contact-info">
-            <h2>联系我们</h2>
             <div class="contact-item">
               <el-icon><Phone /></el-icon>
-              <span>400-123-4567</span>
+              <span>电话: 400-123-4567</span>
             </div>
             <div class="contact-item">
               <el-icon><Message /></el-icon>
-              <span>info@yxly.com</span>
+              <span>邮箱: info@yxly.com</span>
             </div>
             <div class="contact-item">
               <el-icon><Location /></el-icon>
-              <span>某某市某某区某某街道123号</span>
+              <span>地址: 某某市某某区某某街道123号</span>
             </div>
           </div>
           <div class="contact-form">
@@ -187,7 +161,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -200,6 +174,7 @@ import {
   Message,
   Location
 } from '@element-plus/icons-vue'
+import { getLocationPage } from '@/api/modules/location'
 
 const router = useRouter()
 
@@ -220,33 +195,10 @@ const contactForm = reactive({
   message: ''
 })
 
-// 精选房型数据
-const featuredRooms = ref([
-  {
-    id: 1,
-    name: '豪华海景套房',
-    description: '180度海景视野，配备独立阳台和按摩浴缸',
-    price: 588,
-    badge: '热门',
-    features: ['海景', '阳台', '按摩浴缸', '免费WiFi']
-  },
-  {
-    id: 2,
-    name: '温馨家庭房',
-    description: '适合家庭入住，配备儿童设施和游戏区',
-    price: 388,
-    badge: '家庭首选',
-    features: ['家庭房', '儿童设施', '游戏区', '免费早餐']
-  },
-  {
-    id: 3,
-    name: '商务标准间',
-    description: '商务人士首选，配备办公桌和高速网络',
-    price: 288,
-    badge: '商务',
-    features: ['办公桌', '高速网络', '商务中心', '24小时服务']
-  }
-])
+// 地图相关
+let userMap = null
+const locationList = ref([])
+const markers = []
 
 // 服务特色数据
 const features = ref([
@@ -335,24 +287,6 @@ const searchRooms = () => {
   })
 }
 
-// 预订房间
-const bookRoom = (room) => {
-  if (!bookingForm.checkIn || !bookingForm.checkOut) {
-    ElMessage.warning('请先选择入住日期')
-    scrollToRooms()
-    return
-  }
-  
-  router.push({
-    path: `/rooms/${room.id}/book`,
-    query: {
-      checkIn: bookingForm.checkIn,
-      checkOut: bookingForm.checkOut,
-      guests: bookingForm.guests
-    }
-  })
-}
-
 // 提交咨询
 const submitContact = () => {
   if (!contactForm.name || !contactForm.phone) {
@@ -370,6 +304,156 @@ const submitContact = () => {
     message: ''
   })
 }
+
+// 获取位置列表
+const fetchLocations = async () => {
+  try {
+    console.log('🔵 开始获取位置列表...')
+    const res = await getLocationPage({ current: 1, size: 100 })
+    console.log('🔵 API响应:', res)
+    
+    if (res.data && res.data.records) {
+      locationList.value = res.data.records
+      console.log(`🔵 获取到 ${locationList.value.length} 个位置`)
+      
+      // 初始化地图
+      setTimeout(() => {
+        initUserMap()
+      }, 500)
+    }
+  } catch (error) {
+    console.error('❌ 获取位置列表失败:', error)
+  }
+}
+
+// 初始化用户地图
+const initUserMap = () => {
+  console.log('🗺️ 开始初始化用户地图...')
+  
+  if (!window.BMapGL) {
+    console.error('❌ 百度地图API未加载')
+    return
+  }
+  
+  if (locationList.value.length === 0) {
+    console.warn('⚠️ 没有位置数据')
+    return
+  }
+  
+  try {
+    // 创建地图实例
+    userMap = new window.BMapGL.Map('user-location-map')
+    
+    // 使用第一个位置作为中心点
+    const firstLocation = locationList.value[0]
+    const centerPoint = new window.BMapGL.Point(
+      firstLocation.longitude,
+      firstLocation.latitude
+    )
+    
+    userMap.centerAndZoom(centerPoint, 14)
+    userMap.enableScrollWheelZoom(true)
+    
+    // 添加控件
+    userMap.addControl(new window.BMapGL.NavigationControl())
+    userMap.addControl(new window.BMapGL.ScaleControl())
+    
+    console.log(`🔵 开始添加 ${locationList.value.length} 个标记点...`)
+    
+    // 添加所有位置标记
+    locationList.value.forEach((location, index) => {
+      const point = new window.BMapGL.Point(location.longitude, location.latitude)
+      const marker = new window.BMapGL.Marker(point)
+      
+      // 添加标签
+      const label = new window.BMapGL.Label(location.name, {
+        offset: new window.BMapGL.Size(0, -40)
+      })
+      label.setStyle({
+        color: '#fff',
+        backgroundColor: '#409eff',
+        border: 'none',
+        padding: '5px 10px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+      })
+      marker.setLabel(label)
+      
+      // 点击标记显示信息
+      marker.addEventListener('click', () => {
+        const infoWindow = new window.BMapGL.InfoWindow(
+          `<div style="padding: 10px;">
+            <h4 style="margin: 0 0 10px 0; color: #333;">${location.name}</h4>
+            <p style="margin: 5px 0; color: #666;"><strong>地址：</strong>${location.address}</p>
+            ${location.contactPhone ? `<p style="margin: 5px 0; color: #666;"><strong>电话：</strong>${location.contactPhone}</p>` : ''}
+          </div>`,
+          {
+            width: 280,
+            height: 120,
+            title: '位置信息'
+          }
+        )
+        userMap.openInfoWindow(infoWindow, point)
+      })
+      
+      userMap.addOverlay(marker)
+      markers.push(marker)
+      
+      console.log(`✅ 标记点 ${index + 1}: ${location.name}`)
+    })
+    
+    console.log('✅ 用户地图初始化成功!')
+  } catch (error) {
+    console.error('❌ 地图初始化失败:', error)
+  }
+}
+
+// 加载百度地图API
+const loadBaiduMapScript = () => {
+  if (window.BMapGL) {
+    return Promise.resolve()
+  }
+  
+  return new Promise((resolve, reject) => {
+    window.initBaiduMap = () => {
+      resolve()
+    }
+    
+    const script = document.createElement('script')
+    script.type = 'text/javascript'
+    script.src = 'https://api.map.baidu.com/api?v=1.0&type=webgl&ak=VCGhGoWBbWGjsGGmM0YGwb40L6WG39oG&callback=initBaiduMap'
+    script.onerror = () => {
+      reject(new Error('百度地图API加载失败'))
+    }
+    document.head.appendChild(script)
+  })
+}
+
+// 页面加载时初始化
+onMounted(async () => {
+  console.log('🚀 === 用户首页已挂载 ===')
+  try {
+    console.log('🔵 步骤1: 加载百度地图API...')
+    await loadBaiduMapScript()
+    console.log('✅ 步骤1完成: 百度地图API加载成功')
+    
+    console.log('🔵 步骤2: 获取位置列表...')
+    await fetchLocations()
+    console.log('✅ 步骤2完成: 位置列表获取成功')
+  } catch (error) {
+    console.error('❌ 初始化失败:', error)
+  }
+})
+
+// 页面卸载时清理
+onUnmounted(() => {
+  if (userMap) {
+    userMap = null
+  }
+  markers.length = 0
+})
 </script>
 
 <style lang="scss" scoped>
@@ -472,119 +556,6 @@ const submitContact = () => {
   }
 }
 
-// 房型展示
-.rooms-showcase {
-  padding: 80px 0;
-  
-  h2 {
-    text-align: center;
-    margin: 0 0 60px 0;
-    font-size: 32px;
-    color: #333;
-  }
-  
-  .rooms-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 30px;
-  }
-  
-  .room-card {
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
-    
-    &:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    }
-    
-    .room-image {
-      position: relative;
-      height: 200px;
-      
-      .image-placeholder {
-        width: 100%;
-        height: 100%;
-        background: #f5f5f5;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: #999;
-      }
-      
-      .room-badge {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        background: #409eff;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: bold;
-      }
-    }
-    
-    .room-info {
-      padding: 24px;
-      
-      h3 {
-        margin: 0 0 12px 0;
-        font-size: 20px;
-        color: #333;
-      }
-      
-      .room-desc {
-        margin: 0 0 16px 0;
-        color: #666;
-        line-height: 1.6;
-      }
-      
-      .room-features {
-        margin-bottom: 20px;
-        
-        .feature-tag {
-          display: inline-block;
-          background: #f0f8ff;
-          color: #409eff;
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 12px;
-          margin: 0 8px 8px 0;
-        }
-      }
-      
-      .room-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        
-        .price {
-          .price-label {
-            font-size: 16px;
-            color: #e74c3c;
-          }
-          
-          .price-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #e74c3c;
-          }
-          
-          .price-unit {
-            font-size: 14px;
-            color: #666;
-          }
-        }
-      }
-    }
-  }
-}
-
 // 服务特色
 .features-section {
   padding: 80px 0;
@@ -679,10 +650,42 @@ const submitContact = () => {
   }
 }
 
+// 民宿位置地图
+.location-section {
+  padding: 80px 0;
+  background: white;
+  
+  h2 {
+    text-align: center;
+    margin: 0 0 40px 0;
+    font-size: 32px;
+    color: #333;
+  }
+  
+  .location-map-wrapper {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    
+    .location-map {
+      width: 100%;
+      height: 500px;
+    }
+  }
+}
+
 // 联系我们
 .contact-section {
   padding: 80px 0;
   background: #f8f9fa;
+  
+  h2 {
+    text-align: center;
+    margin: 0 0 60px 0;
+    font-size: 32px;
+    color: #333;
+  }
   
   .contact-content {
     display: grid;
@@ -692,12 +695,6 @@ const submitContact = () => {
   }
   
   .contact-info {
-    h2 {
-      margin: 0 0 40px 0;
-      font-size: 32px;
-      color: #333;
-    }
-    
     .contact-item {
       display: flex;
       align-items: center;
@@ -745,6 +742,12 @@ const submitContact = () => {
   .booking-form .el-form {
     flex-direction: column;
     align-items: stretch;
+  }
+  
+  .location-section {
+    .location-map {
+      height: 300px;
+    }
   }
   
   .contact-content {

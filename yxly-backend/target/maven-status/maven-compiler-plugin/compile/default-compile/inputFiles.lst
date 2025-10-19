@@ -1,15 +1,18 @@
+E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\dto\request\LocationUpdateRequest.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\dto\response\RechargeRecordResponse.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\entity\FinancialRecord.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\service\impl\MinioServiceImpl.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\mapper\RechargeRecordMapper.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\service\CustomerService.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\mapper\FinancialRecordMapper.java
+E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\mapper\LocationInfoMapper.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\controller\admin\MinioTestController.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\YxlyApplication.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\dto\request\WithdrawApplyRequest.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\config\PasswordEncoderConfig.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\common\ResultCode.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\enums\RoomStatus.java
+E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\service\LocationInfoService.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\mapper\SysRoleMapper.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\controller\user\UserRoomController.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\util\SecurityUtils.java
@@ -18,6 +21,7 @@ E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\mapper\RoomTypeMapp
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\enums\PaymentStatus.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\config\MinioConfig.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\exception\GlobalExceptionHandler.java
+E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\service\impl\LocationInfoServiceImpl.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\security\JwtTokenProvider.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\service\impl\WithdrawServiceImpl.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\controller\admin\CustomerController.java
@@ -43,6 +47,7 @@ E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\dto\request\Registe
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\service\impl\AuthServiceImpl.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\entity\RechargeRecord.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\service\impl\RoomServiceImpl.java
+E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\entity\LocationInfo.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\config\SecurityConfig.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\enums\RechargeStatus.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\entity\SysRole.java
@@ -71,6 +76,7 @@ E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\entity\WithdrawReco
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\controller\admin\RoomController.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\controller\user\UserBookingController.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\dto\request\BookingCreateRequest.java
+E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\dto\response\LocationResponse.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\mapper\SysUserMapper.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\controller\user\UserController.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\dto\response\RoomResponse.java
@@ -79,6 +85,8 @@ E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\security\UserDetail
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\service\RoomService.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\controller\auth\AuthController.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\mapper\BookingOrderMapper.java
+E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\controller\admin\LocationController.java
+E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\controller\user\UserLocationController.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\service\AuthService.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\service\impl\CustomerServiceImpl.java
 E:\CursorProject\LRminsu\yxly-backend\src\main\java\com\yxly\service\impl\BookingOrderServiceImpl.java
