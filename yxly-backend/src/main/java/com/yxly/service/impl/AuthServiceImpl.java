@@ -6,8 +6,10 @@ import com.yxly.dto.request.RegisterRequest;
 import com.yxly.dto.request.ResetPasswordRequest;
 import com.yxly.dto.request.ChangePasswordRequest;
 import com.yxly.dto.response.LoginResponse;
+import com.yxly.entity.SysRole;
 import com.yxly.entity.SysUser;
 import com.yxly.exception.BusinessException;
+import com.yxly.mapper.SysRoleMapper;
 import com.yxly.mapper.SysUserMapper;
 import com.yxly.security.JwtTokenProvider;
 import com.yxly.service.AuthService;
@@ -33,6 +35,7 @@ import java.time.LocalDateTime;
 public class AuthServiceImpl implements AuthService {
     
     private final SysUserMapper userMapper;
+    private final SysRoleMapper roleMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     
@@ -97,7 +100,14 @@ public class AuthServiceImpl implements AuthService {
             
             // 2. 检查用户状态
             if (user.getStatus() == 0) {
-                throw new BusinessException(ResultCode.USER_DISABLED, "用户已被禁用");
+                // 检查是否是商户注册待审核状态
+                if (user.getMerchantStatus() != null && user.getMerchantStatus() == 0) {
+                    throw new BusinessException(ResultCode.USER_DISABLED, "您的账号正在审核中，请耐心等待");
+                } else if (user.getMerchantStatus() != null && user.getMerchantStatus() == 2) {
+                    throw new BusinessException(ResultCode.USER_DISABLED, "账号审核不通过，无法登录");
+                } else {
+                    throw new BusinessException(ResultCode.USER_DISABLED, "用户已被禁用");
+                }
             }
             
             // 3. 验证密码
@@ -121,13 +131,31 @@ public class AuthServiceImpl implements AuthService {
             String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
             Long expiresIn = jwtTokenProvider.getExpirationTime();
             
-            // 6. 更新最后登录信息
+            // 6. 查询用户角色信息
+            String roleCode = null;
+            if (user.getRoleId() != null) {
+                SysRole role = roleMapper.selectById(user.getRoleId());
+                if (role != null) {
+                    roleCode = role.getRoleCode();
+                }
+            }
+            
+            // 7. 更新最后登录信息
             user.setLastLoginTime(LocalDateTime.now());
             // 这里可以获取真实IP，暂时使用占位符
             user.setLastLoginIp("127.0.0.1");
             userMapper.updateById(user);
             
-            // 7. 构建响应
+            // 8. 构建响应
+            log.info("=== 构建登录响应 ===");
+            log.info("用户ID: {}", user.getId());
+            log.info("用户名: {}", user.getUsername());
+            log.info("真实姓名: {}", user.getRealName());
+            log.info("角色ID: {}", user.getRoleId());
+            log.info("角色代码: {}", roleCode);
+            log.info("商户ID: {}", user.getMerchantId());
+            log.info("===================");
+            
             LoginResponse.UserInfo userInfo = LoginResponse.UserInfo.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -136,6 +164,8 @@ public class AuthServiceImpl implements AuthService {
                 .phone(user.getPhone())
                 .avatar(user.getAvatar())
                 .roleId(user.getRoleId())
+                .roleCode(roleCode)
+                .merchantId(user.getMerchantId())  // 添加商户ID
                 .lastLoginTime(user.getLastLoginTime())
                 .build();
             

@@ -111,12 +111,23 @@ const userAvatar = computed(() => {
 })
 
 const menuRoutes = computed(() => {
+  const roleCode = authStore.userInfo?.roleCode
+  
   return router.getRoutes().filter(route => {
-    // 只显示管理员路由，必须有 requiresAdmin 标记
-    return route.meta?.requiresAuth && 
-           route.meta?.requiresAdmin &&
-           !route.meta?.hideInMenu && 
-           route.children
+    // 根据用户角色显示对应的菜单
+    if (roleCode === 'SUPER_ADMIN') {
+      // 超级管理员只显示 requiresSuperAdmin 的路由
+      return route.meta?.requiresAuth && 
+             route.meta?.requiresSuperAdmin &&
+             !route.meta?.hideInMenu && 
+             route.children
+    } else {
+      // 普通管理员显示 requiresAdmin 的路由
+      return route.meta?.requiresAuth && 
+             route.meta?.requiresAdmin &&
+             !route.meta?.hideInMenu && 
+             route.children
+    }
   })
 })
 

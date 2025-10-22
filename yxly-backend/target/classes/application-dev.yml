@@ -19,6 +19,14 @@ spring:
       enabled: true
       port: 35729
 
+# MinIO对象存储配置
+minio:
+  endpoint: http://localhost:9000
+  accessKey: admin
+  secretKey: 12345678
+  bucketName: txt
+  urlPrefix: http://localhost:9000/txt/
+
 logging:
   level:
     com.yxly: DEBUG

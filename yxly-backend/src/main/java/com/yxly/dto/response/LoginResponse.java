@@ -64,6 +64,12 @@ public class LoginResponse {
         @Schema(description = "角色ID")
         private Long roleId;
         
+        @Schema(description = "角色代码", example = "SUPER_ADMIN")
+        private String roleCode;
+        
+        @Schema(description = "商户ID")
+        private Long merchantId;
+        
         @Schema(description = "最后登录时间")
         private LocalDateTime lastLoginTime;
     }

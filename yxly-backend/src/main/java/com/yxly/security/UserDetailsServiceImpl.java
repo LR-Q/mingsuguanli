@@ -5,14 +5,10 @@ import com.yxly.entity.SysUser;
 import com.yxly.mapper.SysUserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
 
 /**
  * Spring Security用户详情服务实现
@@ -54,15 +50,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("用户已被禁用: " + account);
         }
         
-        // 这里可以根据角色ID查询具体权限，暂时使用默认权限
-        return User.builder()
-            .username(user.getUsername())
-            .password(user.getPassword())
-            .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")))
-            .accountExpired(false)
-            .accountLocked(false)
-            .credentialsExpired(false)
-            .disabled(user.getStatus() == 0)
-            .build();
+        // 返回包含完整用户信息的 UserPrincipal
+        return new UserPrincipal(user);
     }
 }

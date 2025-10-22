@@ -60,13 +60,18 @@
                 :icon="Delete" 
                 circle 
                 size="small"
-                @click="removeFavorite(room)"
+                @click="cancelFavorite(room)"
               />
             </div>
           </div>
           
           <div class="room-info">
-            <h4>{{ room.name }}</h4>
+            <div class="room-header">
+              <h4>{{ room.name }}</h4>
+              <el-tag :type="getStatusType(room.status)" size="small">
+                {{ getStatusText(room.status) }}
+              </el-tag>
+            </div>
             <p class="room-type">{{ room.type }}</p>
             <p class="room-description">{{ room.description }}</p>
             
@@ -91,8 +96,13 @@
                 <el-button size="small" @click="viewRoom(room)">
                   查看详情
                 </el-button>
-                <el-button type="primary" size="small" @click="bookRoom(room)">
-                  立即预订
+                <el-button 
+                  type="primary" 
+                  size="small" 
+                  @click="bookRoom(room)"
+                  :disabled="!isRoomAvailable(room.status)"
+                >
+                  {{ isRoomAvailable(room.status) ? '立即预订' : '暂不可订' }}
                 </el-button>
               </div>
             </div>
@@ -115,49 +125,18 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Star, Search, Picture, Delete } from '@element-plus/icons-vue'
+import { getFavoriteList, removeFavorite } from '@/api/modules/favorite'
 
 const router = useRouter()
 
 // 响应式数据
 const searchKeyword = ref('')
-
-// 模拟收藏数据
-const favoriteRooms = ref([
-  {
-    id: 1,
-    name: '海景豪华大床房',
-    type: '豪华大床房',
-    description: '面朝大海，春暖花开。宽敞舒适的海景房，让您尽享海滨度假时光。',
-    image: '/api/placeholder/400/300',
-    price: 388,
-    features: ['海景', '大床', '阳台', 'WiFi', '空调'],
-    favoriteTime: '2024-10-15 14:30:00'
-  },
-  {
-    id: 2,
-    name: '温馨标准双人间',
-    type: '标准双人间',
-    description: '温馨舒适的标准双人间，设施齐全，性价比超高。',
-    image: '/api/placeholder/400/300',
-    price: 288,
-    features: ['双床', 'WiFi', '空调', '24小时热水'],
-    favoriteTime: '2024-10-14 09:15:00'
-  },
-  {
-    id: 3,
-    name: '商务套房',
-    type: '商务套房',
-    description: '专为商务人士设计的套房，配备办公区域和会客厅。',
-    image: '/api/placeholder/400/300',
-    price: 588,
-    features: ['套房', '办公桌', '会客厅', '商务中心', 'WiFi'],
-    favoriteTime: '2024-10-13 16:45:00'
-  }
-])
+const loading = ref(false)
+const favoriteRooms = ref([])
 
 // 计算属性
 const filteredRooms = computed(() => {
@@ -172,8 +151,59 @@ const filteredRooms = computed(() => {
   )
 })
 
-// 方法
-const removeFavorite = async (room) => {
+// 加载收藏列表
+const loadFavorites = async () => {
+  try {
+    loading.value = true
+    const response = await getFavoriteList()
+    
+    if (response.data && Array.isArray(response.data)) {
+      favoriteRooms.value = response.data.map(item => {
+        // 处理图片
+        let imageUrl = ''
+        if (item.images) {
+          try {
+            const images = typeof item.images === 'string' ? JSON.parse(item.images) : item.images
+            imageUrl = Array.isArray(images) && images.length > 0 ? images[0] : ''
+          } catch (e) {
+            console.error('解析图片失败:', e)
+          }
+        }
+        
+        // 处理设施
+        let facilities = []
+        if (item.facilities) {
+          try {
+            facilities = typeof item.facilities === 'string' ? JSON.parse(item.facilities) : item.facilities
+          } catch (e) {
+            console.error('解析设施失败:', e)
+            facilities = []
+          }
+        }
+        
+        return {
+          id: item.room_id || item.roomId || item.id,
+          name: item.room_type_name || item.roomTypeName || item.room_number || item.roomNumber || '房间',
+          type: item.room_type_name || item.roomTypeName || '标准房型',
+          description: item.description || '舒适温馨的房间',
+          image: imageUrl,
+          price: item.current_price || item.currentPrice || item.base_price || item.basePrice || 0,
+          features: facilities,
+          status: item.status || 1,
+          favoriteTime: item.create_time || item.createTime || item.favoriteTime
+        }
+      })
+    }
+  } catch (error) {
+    console.error('加载收藏列表失败:', error)
+    ElMessage.error('加载收藏列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 取消收藏
+const cancelFavorite = async (room) => {
   try {
     await ElMessageBox.confirm(`确定要取消收藏"${room.name}"吗？`, '取消收藏', {
       confirmButtonText: '确定',
@@ -181,8 +211,7 @@ const removeFavorite = async (room) => {
       type: 'warning'
     })
 
-    // 这里调用API取消收藏
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await removeFavorite(room.id)
 
     const index = favoriteRooms.value.findIndex(r => r.id === room.id)
     if (index > -1) {
@@ -191,7 +220,10 @@ const removeFavorite = async (room) => {
 
     ElMessage.success('已取消收藏')
   } catch (error) {
-    // 用户取消操作
+    if (error !== 'cancel') {
+      console.error('取消收藏失败:', error)
+      ElMessage.error('取消收藏失败')
+    }
   }
 }
 
@@ -201,9 +233,50 @@ const viewRoom = (room) => {
 }
 
 const bookRoom = (room) => {
+  // 检查房间状态
+  if (room.status !== 1) {
+    const statusText = getStatusText(room.status)
+    ElMessage.warning(`该房间当前${statusText}，无法预订`)
+    return
+  }
+  
   // 跳转到预订页面
   router.push(`/rooms/${room.id}/book`)
 }
+
+// 获取房间状态文本
+const getStatusText = (status) => {
+  const statusMap = {
+    1: '可用',
+    2: '已被预订',
+    3: '维修中',
+    4: '清洁中',
+    5: '已停用'
+  }
+  return statusMap[status] || '未知状态'
+}
+
+// 获取房间状态标签类型
+const getStatusType = (status) => {
+  const typeMap = {
+    1: 'success',
+    2: 'warning',
+    3: 'danger',
+    4: 'info',
+    5: 'info'
+  }
+  return typeMap[status] || 'info'
+}
+
+// 判断房间是否可预订
+const isRoomAvailable = (status) => {
+  return status === 1
+}
+
+// 页面挂载时加载数据
+onMounted(() => {
+  loadFavorites()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -302,11 +375,20 @@ const bookRoom = (room) => {
         .room-info {
           padding: 16px;
           
+          .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 8px;
+          }
+          
           h4 {
-            margin: 0 0 8px 0;
+            margin: 0;
             color: #303133;
             font-size: 16px;
             font-weight: 600;
+            flex: 1;
           }
           
           .room-type {

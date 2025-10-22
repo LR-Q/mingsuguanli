@@ -90,6 +90,20 @@
             </el-link>
           </div>
         </el-form-item>
+        
+        <el-divider>或</el-divider>
+        
+        <el-form-item>
+          <el-button
+            type="success"
+            size="large"
+            style="width: 100%"
+            plain
+            @click="$router.push('/merchant-register')"
+          >
+            我是民宿主，注册管理员账号
+          </el-button>
+        </el-form-item>
       </el-form>
     </div>
   </div>

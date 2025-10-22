@@ -84,6 +84,7 @@ public class SecurityConfig {
             .authorizeRequests()
                 // 公开接口
                 .antMatchers("/v1/auth/**").permitAll()
+                .antMatchers("/v1/merchant/register").permitAll()  // 允许商户注册接口访问
                 .antMatchers("/v1/dev/**").permitAll()
                 .antMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .antMatchers("/druid/**").permitAll()
@@ -92,6 +93,8 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.GET, "/v1/rooms/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/v1/admin/rooms/types").permitAll()  // 临时允许房型接口访问
                 .antMatchers("/v1/admin/files/**").permitAll()  // 临时允许文件上传接口访问
+                .antMatchers("/v1/upload/**").permitAll()  // 允许通用上传接口访问（身份证等）
+                .antMatchers("/v1/super-admin/**").permitAll()  // 临时允许超级管理员接口访问（商户审核等）
                 .antMatchers("/v1/admin/recharge/**").permitAll()  // 临时允许管理员充值管理接口访问
                 .antMatchers("/v1/admin/withdraw/**").permitAll()  // 临时允许管理员提现管理接口访问
                 .antMatchers("/v1/admin/bookings/**").permitAll()  // 临时允许管理员订单管理接口访问

@@ -53,7 +53,7 @@
       <!-- 右侧表单面板 -->
       <div class="form-panel">
         <div class="panel-header">
-          <h3>{{ isEdit ? '编辑位置' : '添加位置' }}</h3>
+          <h3>{{ isReadOnly ? '查看位置' : (isEdit ? '编辑位置' : '添加位置') }}</h3>
           <el-button-group>
             <el-button size="small" @click="handleClearForm">
               <el-icon><RefreshLeft /></el-icon>
@@ -79,6 +79,7 @@
               <el-input
                 v-model="formData.name"
                 placeholder="请输入位置名称"
+                :disabled="isReadOnly"
               />
             </el-form-item>
             
@@ -88,19 +89,20 @@
                 type="textarea"
                 :rows="2"
                 placeholder="点击地图自动获取地址"
+                :disabled="isReadOnly"
               />
             </el-form-item>
             
             <el-form-item label="省份" prop="province">
-              <el-input v-model="formData.province" placeholder="省份" />
+              <el-input v-model="formData.province" placeholder="省份" :disabled="isReadOnly" />
             </el-form-item>
             
             <el-form-item label="城市" prop="city">
-              <el-input v-model="formData.city" placeholder="城市" />
+              <el-input v-model="formData.city" placeholder="城市" :disabled="isReadOnly" />
             </el-form-item>
             
             <el-form-item label="区县" prop="district">
-              <el-input v-model="formData.district" placeholder="区县" />
+              <el-input v-model="formData.district" placeholder="区县" :disabled="isReadOnly" />
             </el-form-item>
             
             <el-row :gutter="10">
@@ -128,11 +130,12 @@
               <el-input
                 v-model="formData.contactPhone"
                 placeholder="请输入联系电话"
+                :disabled="isReadOnly"
               />
             </el-form-item>
             
             <el-form-item label="地图类型" prop="mapType">
-              <el-radio-group v-model="formData.mapType">
+              <el-radio-group v-model="formData.mapType" :disabled="isReadOnly">
                 <el-radio label="baidu">百度</el-radio>
                 <el-radio label="amap">高德</el-radio>
                 <el-radio label="google">谷歌</el-radio>
@@ -145,6 +148,7 @@
                 type="textarea"
                 :rows="3"
                 placeholder="请输入位置描述"
+                :disabled="isReadOnly"
               />
             </el-form-item>
             
@@ -155,10 +159,11 @@
                 :inactive-value="0"
                 active-text="启用"
                 inactive-text="禁用"
+                :disabled="isReadOnly"
               />
             </el-form-item>
             
-            <el-form-item>
+            <el-form-item v-if="!isReadOnly">
               <el-button
                 type="primary"
                 @click="handleSubmit"
@@ -208,17 +213,29 @@
             </div>
             <template #footer>
               <div class="card-actions">
-                <el-button size="small" type="primary" @click.stop="handleEdit(location)">
+                <!-- 查看按钮（所有人都可以查看） -->
+                <el-button size="small" @click.stop="handleEdit(location)" v-if="!canEdit(location)">
+                  查看
+                </el-button>
+                
+                <!-- 编辑按钮（仅创建者和超级管理员可见） -->
+                <el-button size="small" type="primary" @click.stop="handleEdit(location)" v-if="canEdit(location)">
                   编辑
                 </el-button>
                 <el-button 
+                  v-if="canEdit(location)"
                   size="small" 
                   :type="location.isActive === 1 ? 'warning' : 'success'"
                   @click.stop="handleToggleStatus(location)"
                 >
                   {{ location.isActive === 1 ? '禁用' : '启用' }}
                 </el-button>
-                <el-button size="small" type="danger" @click.stop="handleDelete(location)">
+                <el-button 
+                  v-if="canEdit(location)"
+                  size="small" 
+                  type="danger" 
+                  @click.stop="handleDelete(location)"
+                >
                   删除
                 </el-button>
               </div>
@@ -231,7 +248,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch, nextTick } from 'vue'
+import { ref, reactive, onMounted, watch, nextTick, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus, Refresh, RefreshLeft, List, Location, Phone, Position } from '@element-plus/icons-vue'
 import {
@@ -241,6 +258,24 @@ import {
   deleteLocation,
   toggleLocationStatus
 } from '@/api/modules/location'
+import { useAuthStore } from '@/stores/modules/auth'
+
+// 获取用户信息
+const authStore = useAuthStore()
+const currentUser = computed(() => authStore.userInfo)
+
+// 权限判断：是否可以编辑某个位置
+const canEdit = (location) => {
+  if (!currentUser.value) return false
+  
+  // 超级管理员可以编辑所有位置
+  if (currentUser.value.roleCode === 'SUPER_ADMIN') {
+    return true
+  }
+  
+  // 民宿主只能编辑自己创建的位置
+  return location.merchantId === currentUser.value.merchantId
+}
 
 // 响应式数据
 const loading = ref(false)
@@ -249,6 +284,7 @@ const locationList = ref([])
 const formRef = ref(null)
 const isEdit = ref(false)
 const editId = ref(null)
+const isReadOnly = ref(false) // 是否只读模式（查看别人的位置）
 const searchKeyword = ref('')
 const drawerVisible = ref(false)
 const selectedLocation = ref(null)
@@ -360,6 +396,7 @@ const resetForm = () => {
   formData.description = ''
   formData.mapType = 'baidu'
   formData.isActive = 1
+  isReadOnly.value = false // 重置只读状态
 }
 
 // 编辑位置
@@ -367,6 +404,9 @@ const handleEdit = (row) => {
   resetForm()
   isEdit.value = true
   editId.value = row.id
+  
+  // 判断是否有编辑权限
+  isReadOnly.value = !canEdit(row)
   
   // 填充表单数据
   Object.keys(formData).forEach(key => {
@@ -393,7 +433,11 @@ const handleEdit = (row) => {
   // 关闭抽屉
   drawerVisible.value = false
   
-  ElMessage.info('可以在右侧编辑位置信息')
+  if (isReadOnly.value) {
+    ElMessage.info('您只能查看此位置信息，无权编辑')
+  } else {
+    ElMessage.info('可以在右侧编辑位置信息')
+  }
 }
 
 // 提交表单

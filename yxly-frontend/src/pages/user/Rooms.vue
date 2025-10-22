@@ -165,9 +165,19 @@
                   <span class="price">￥{{ room.price }}</span>
                   <span class="unit">/晚</span>
                 </div>
-                <el-button type="primary" size="large" @click="bookRoom(room)">
-                  立即预订
-                </el-button>
+                <div class="action-buttons">
+                  <el-button 
+                    :type="room.isFavorite ? 'danger' : 'default'"
+                    :icon="room.isFavorite ? StarFilled : Star"
+                    size="large"
+                    @click="toggleFavorite(room)"
+                    :loading="room.favoriteLoading"
+                    circle
+                  />
+                  <el-button type="primary" size="large" @click="bookRoom(room)">
+                    立即预订
+                  </el-button>
+                </div>
               </div>
             </div>
           </div>
@@ -186,8 +196,9 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Picture, User, Expand, Check, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import { Picture, User, Expand, Check, ArrowLeft, ArrowRight, Star, StarFilled } from '@element-plus/icons-vue'
 import { getAvailableRooms, getUserRoomTypes, searchRooms as searchRoomsAPI } from '@/api/modules/userRoom'
+import { addFavorite, removeFavorite, checkMultipleFavorites } from '@/api/modules/favorite'
 
 const router = useRouter()
 const route = useRoute()
@@ -271,7 +282,14 @@ const loadRooms = async (isLoadMore = false) => {
       // 添加显示名称
       room.name = room.roomTypeName || `${room.roomNumber}号房间`
       room.price = room.currentPrice || room.basePrice || 0
+      
+      // 初始化收藏状态
+      room.isFavorite = false
+      room.favoriteLoading = false
     })
+    
+    // 批量检查收藏状态
+    await checkRoomsFavoriteStatus()
     
   } catch (error) {
     console.error('加载房间列表失败:', error)
@@ -374,7 +392,14 @@ const searchRooms = async () => {
       
       room.name = room.roomTypeName || `${room.roomNumber}号房间`
       room.price = room.currentPrice || room.basePrice || 0
+      
+      // 初始化收藏状态
+      room.isFavorite = false
+      room.favoriteLoading = false
     })
+    
+    // 批量检查收藏状态
+    await checkRoomsFavoriteStatus()
     
     if (total.value === 0) {
       ElMessage.info('未找到符合条件的房间')
@@ -461,6 +486,52 @@ watch(() => searchForm.checkIn, (newCheckIn) => {
     }
   }
 })
+
+// 批量检查房间收藏状态
+const checkRoomsFavoriteStatus = async () => {
+  if (rooms.value.length === 0) return
+  
+  try {
+    const roomIds = rooms.value.map(room => room.id)
+    const response = await checkMultipleFavorites(roomIds)
+    
+    if (response.data && typeof response.data === 'object') {
+      // 假设返回的是 { roomId: true/false } 的对象
+      rooms.value.forEach(room => {
+        room.isFavorite = response.data[room.id] || false
+      })
+    }
+  } catch (error) {
+    console.error('检查收藏状态失败:', error)
+    // 失败时不影响房间列表显示
+  }
+}
+
+// 切换收藏状态
+const toggleFavorite = async (room) => {
+  if (room.favoriteLoading) return
+  
+  room.favoriteLoading = true
+  
+  try {
+    if (room.isFavorite) {
+      // 取消收藏
+      await removeFavorite(room.id)
+      room.isFavorite = false
+      ElMessage.success('已取消收藏')
+    } else {
+      // 添加收藏
+      await addFavorite(room.id)
+      room.isFavorite = true
+      ElMessage.success('已添加到收藏')
+    }
+  } catch (error) {
+    console.error('操作收藏失败:', error)
+    ElMessage.error(error.message || '操作失败，请重试')
+  } finally {
+    room.favoriteLoading = false
+  }
+}
 
 onMounted(() => {
   // 初始化加载
@@ -735,6 +806,12 @@ onMounted(() => {
               color: #909399;
               margin-left: 4px;
             }
+          }
+          
+          .action-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
           }
         }
       }

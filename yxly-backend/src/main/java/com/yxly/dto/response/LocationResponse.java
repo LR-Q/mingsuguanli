@@ -16,6 +16,9 @@ public class LocationResponse {
     @Schema(description = "位置ID")
     private Long id;
 
+    @Schema(description = "商户ID")
+    private Long merchantId;
+
     @Schema(description = "位置名称")
     private String name;
 

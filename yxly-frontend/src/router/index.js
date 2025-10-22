@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/modules/auth'
+import { ElMessage } from 'element-plus'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 
@@ -28,6 +29,16 @@ const constantRoutes = [
     component: () => import('@/pages/auth/Register.vue'),
     meta: {
       title: '注册',
+      requiresAuth: false,
+      hideInMenu: true
+    }
+  },
+  {
+    path: '/merchant-register',
+    name: 'MerchantRegister',
+    component: () => import('@/pages/auth/MerchantRegister.vue'),
+    meta: {
+      title: '民宿主管理员注册',
       requiresAuth: false,
       hideInMenu: true
     }
@@ -67,7 +78,19 @@ const constantRoutes = [
 const userRoutes = [
   {
     path: '/',
-    redirect: '/home'
+    name: 'Root',
+    redirect: () => {
+      const authStore = useAuthStore()
+      const roleCode = authStore.userInfo?.roleCode
+      
+      // 根据角色重定向到不同页面
+      if (roleCode === 'SUPER_ADMIN') {
+        return '/super-admin/merchants'
+      } else if (roleCode === 'HOMESTAY_ADMIN') {
+        return '/admin'
+      }
+      return '/home'
+    }
   },
   {
     path: '/home',
@@ -182,6 +205,33 @@ const userRoutes = [
   {
     path: '/orders',
     redirect: '/user-center/orders'
+  }
+]
+
+// 超级管理员路由
+const superAdminRoutes = [
+  {
+    path: '/super-admin',
+    name: 'SuperAdminLayout',
+    component: () => import('@/layouts/DefaultLayout.vue'),
+    redirect: '/super-admin/merchants',
+    meta: {
+      requiresAuth: true,
+      requiresSuperAdmin: true
+    },
+    children: [
+      {
+        path: 'merchants',
+        name: 'MerchantAudit',
+        component: () => import('@/pages/super-admin/MerchantAudit.vue'),
+        meta: {
+          title: '商户管理',
+          icon: 'UserFilled',
+          requiresAuth: true,
+          requiresSuperAdmin: true
+        }
+      }
+    ]
   }
 ]
 
@@ -347,7 +397,7 @@ const adminRoutes = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: [...constantRoutes, ...userRoutes, ...adminRoutes],
+  routes: [...constantRoutes, ...userRoutes, ...superAdminRoutes, ...adminRoutes],
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
@@ -389,12 +439,54 @@ router.beforeEach(async (to, from, next) => {
   // 如果已登录访问登录页，重定向到相应首页
   if ((to.path === '/login' || to.path === '/admin-login') && authStore.isAuthenticated) {
     // 根据用户角色判断跳转到哪里
-    if (authStore.userInfo?.userType === 'admin' || authStore.userInfo?.roles?.includes('admin')) {
+    const roleCode = authStore.userInfo?.roleCode
+    
+    if (roleCode === 'SUPER_ADMIN') {
+      // 超级管理员跳转到超管后台
+      next('/super-admin/merchants')
+    } else if (roleCode === 'HOMESTAY_ADMIN' || authStore.userInfo?.userType === 'admin' || authStore.userInfo?.roles?.includes('admin')) {
+      // 民宿主管理员跳转到管理后台
       next('/admin')
     } else {
+      // 普通用户跳转到用户首页
       next('/home')
     }
     return
+  }
+  
+  // 防止管理员角色访问用户页面
+  if (authStore.isAuthenticated && authStore.userInfo) {
+    const roleCode = authStore.userInfo?.roleCode
+    const isUserPage = to.path === '/home' || to.path.startsWith('/rooms') || to.path.startsWith('/user-center')
+    
+    if (isUserPage) {
+      if (roleCode === 'SUPER_ADMIN') {
+        // 超级管理员不能访问用户页面，重定向到超管后台
+        ElMessage.warning('超级管理员请使用管理后台')
+        next('/super-admin/merchants')
+        return
+      } else if (roleCode === 'HOMESTAY_ADMIN') {
+        // 民宿管理员不能访问用户页面，重定向到管理后台
+        ElMessage.warning('管理员请使用管理后台')
+        next('/admin')
+        return
+      }
+    }
+  }
+  
+  // 检查超级管理员权限
+  if (to.meta.requiresSuperAdmin) {
+    if (!authStore.isAuthenticated) {
+      next('/login')
+      return
+    }
+    // 检查是否是超级管理员角色
+    const roleCode = authStore.userInfo?.roleCode
+    if (roleCode !== 'SUPER_ADMIN') {
+      ElMessage.error('无权访问，需要超级管理员权限')
+      next(from.path || '/home')
+      return
+    }
   }
   
   // 检查管理员权限

@@ -27,11 +27,19 @@ public class LocationInfoServiceImpl implements LocationInfoService {
     private final LocationInfoMapper locationInfoMapper;
 
     @Override
-    public IPage<LocationResponse> getLocationPage(Long current, Long size) {
-        log.info("分页查询位置信息: current={}, size={}", current, size);
+    public IPage<LocationResponse> getLocationPage(Long current, Long size, Long merchantId, String roleCode) {
+        log.info("=== 分页查询位置信息（所有管理员共享查看）===");
+        log.info("current: {}, size: {}", current, size);
+        log.info("merchantId: {}", merchantId);
+        log.info("roleCode: {}", roleCode);
         
         Page<LocationInfo> page = new Page<>(current, size);
         LambdaQueryWrapper<LocationInfo> wrapper = new LambdaQueryWrapper<>();
+        
+        // 所有管理员都可以查看所有位置（共享）
+        // 不需要按 merchantId 过滤
+        log.info("✅ 查询所有位置（管理员共享查看）");
+        
         wrapper.orderByDesc(LocationInfo::getUpdateTime);
         
         IPage<LocationInfo> locationPage = locationInfoMapper.selectPage(page, wrapper);
@@ -45,13 +53,18 @@ public class LocationInfoServiceImpl implements LocationInfoService {
     }
 
     @Override
-    public LocationResponse getLocationById(Long id) {
-        log.info("获取位置信息详情: id={}", id);
+    public LocationResponse getLocationById(Long id, Long merchantId, String roleCode) {
+        log.info("获取位置信息详情: id={}, merchantId={}, roleCode={}", id, merchantId, roleCode);
         
         LocationInfo location = locationInfoMapper.selectByIdWithoutDeleted(id);
         if (location == null) {
             throw new BusinessException(ResultCode.DATA_NOT_FOUND, "位置信息不存在");
         }
+        
+        // 所有管理员都可以查看位置详情（共享）
+        // 不需要验证 merchantId
+        log.info("✅ 查看位置详情（管理员共享查看）: locationId={}, locationMerchantId={}", 
+                id, location.getMerchantId());
         
         LocationResponse response = new LocationResponse();
         BeanUtils.copyProperties(location, response);
@@ -60,11 +73,22 @@ public class LocationInfoServiceImpl implements LocationInfoService {
 
     @Override
     @Transactional
-    public Long createLocation(LocationUpdateRequest request) {
-        log.info("创建位置信息: name={}", request.getName());
+    public Long createLocation(LocationUpdateRequest request, Long merchantId) {
+        log.info("=== Service层 - 创建位置信息 ===");
+        log.info("接收到的 merchantId: {}", merchantId);
+        log.info("位置名称: {}", request.getName());
+        
+        if (merchantId == null) {
+            log.error("商户ID为空，无法创建位置");
+            throw new BusinessException(ResultCode.PARAM_ERROR, "商户ID不能为空");
+        }
         
         LocationInfo location = new LocationInfo();
         BeanUtils.copyProperties(request, location);
+        
+        // 设置商户ID
+        location.setMerchantId(merchantId);
+        log.info("设置位置的 merchantId: {}", location.getMerchantId());
         
         // 如果没有设置地图类型，默认使用百度地图
         if (location.getMapType() == null || location.getMapType().isEmpty()) {
@@ -76,23 +100,47 @@ public class LocationInfoServiceImpl implements LocationInfoService {
             location.setIsActive(1);
         }
         
+        log.info("准备插入数据库，location对象: id={}, merchantId={}, name={}", 
+                location.getId(), location.getMerchantId(), location.getName());
+        
         int result = locationInfoMapper.insert(location);
         if (result <= 0) {
             throw new BusinessException(ResultCode.OPERATION_FAILED, "位置信息创建失败");
         }
         
-        log.info("位置信息创建成功: locationId={}", location.getId());
+        log.info("位置信息创建成功: locationId={}, merchantId={}", location.getId(), location.getMerchantId());
+        
+        // 再次从数据库查询确认
+        LocationInfo savedLocation = locationInfoMapper.selectById(location.getId());
+        log.info("数据库中保存的 merchantId: {}", savedLocation.getMerchantId());
+        
         return location.getId();
     }
 
     @Override
     @Transactional
-    public void updateLocation(Long id, LocationUpdateRequest request) {
-        log.info("更新位置信息: id={}, name={}", id, request.getName());
+    public void updateLocation(Long id, LocationUpdateRequest request, Long merchantId, String roleCode) {
+        log.info("更新位置信息: id={}, name={}, merchantId={}, roleCode={}", id, request.getName(), merchantId, roleCode);
         
         LocationInfo location = locationInfoMapper.selectByIdWithoutDeleted(id);
         if (location == null) {
             throw new BusinessException(ResultCode.DATA_NOT_FOUND, "位置信息不存在");
+        }
+        
+        // 如果不是超级管理员，验证位置归属
+        if (!"SUPER_ADMIN".equals(roleCode)) {
+            // 检查用户是否有 merchantId
+            if (merchantId == null) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "当前用户没有关联商户，无权操作位置信息");
+            }
+            // 检查位置是否有 merchantId
+            if (location.getMerchantId() == null) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "此位置未关联商户，无权操作");
+            }
+            // 检查是否是同一个商户
+            if (!location.getMerchantId().equals(merchantId)) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "无权修改此位置信息");
+            }
         }
         
         BeanUtils.copyProperties(request, location);
@@ -108,12 +156,28 @@ public class LocationInfoServiceImpl implements LocationInfoService {
 
     @Override
     @Transactional
-    public void deleteLocation(Long id) {
-        log.info("删除位置信息: id={}", id);
+    public void deleteLocation(Long id, Long merchantId, String roleCode) {
+        log.info("删除位置信息: id={}, merchantId={}, roleCode={}", id, merchantId, roleCode);
         
         LocationInfo location = locationInfoMapper.selectByIdWithoutDeleted(id);
         if (location == null) {
             throw new BusinessException(ResultCode.DATA_NOT_FOUND, "位置信息不存在");
+        }
+        
+        // 如果不是超级管理员，验证位置归属
+        if (!"SUPER_ADMIN".equals(roleCode)) {
+            // 检查用户是否有 merchantId
+            if (merchantId == null) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "当前用户没有关联商户，无权删除位置信息");
+            }
+            // 检查位置是否有 merchantId
+            if (location.getMerchantId() == null) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "此位置未关联商户，无权删除");
+            }
+            // 检查是否是同一个商户
+            if (!location.getMerchantId().equals(merchantId)) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "无权删除此位置信息");
+            }
         }
         
         int result = locationInfoMapper.deleteById(id);
@@ -164,12 +228,28 @@ public class LocationInfoServiceImpl implements LocationInfoService {
 
     @Override
     @Transactional
-    public void toggleLocationStatus(Long id, Integer isActive) {
-        log.info("切换位置启用状态: id={}, isActive={}", id, isActive);
+    public void toggleLocationStatus(Long id, Integer isActive, Long merchantId, String roleCode) {
+        log.info("切换位置启用状态: id={}, isActive={}, merchantId={}, roleCode={}", id, isActive, merchantId, roleCode);
         
         LocationInfo location = locationInfoMapper.selectByIdWithoutDeleted(id);
         if (location == null) {
             throw new BusinessException(ResultCode.DATA_NOT_FOUND, "位置信息不存在");
+        }
+        
+        // 如果不是超级管理员，验证位置归属
+        if (!"SUPER_ADMIN".equals(roleCode)) {
+            // 检查用户是否有 merchantId
+            if (merchantId == null) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "当前用户没有关联商户，无权修改位置状态");
+            }
+            // 检查位置是否有 merchantId
+            if (location.getMerchantId() == null) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "此位置未关联商户，无权修改状态");
+            }
+            // 检查是否是同一个商户
+            if (!location.getMerchantId().equals(merchantId)) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "无权修改此位置状态");
+            }
         }
         
         location.setIsActive(isActive);

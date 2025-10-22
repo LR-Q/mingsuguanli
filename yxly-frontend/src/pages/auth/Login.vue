@@ -44,14 +44,6 @@
           </div>
         </el-form-item>
         
-        <el-form-item>
-          <div style="text-align: center; width: 100%;">
-            <el-radio-group v-model="loginForm.loginType">
-              <el-radio label="user">普通用户</el-radio>
-              <el-radio label="admin">管理员</el-radio>
-            </el-radio-group>
-          </div>
-        </el-form-item>
         
         <el-form-item>
           <el-button
@@ -98,8 +90,7 @@ const loading = ref(false)
 const loginForm = reactive({
   account: '',
   password: '',
-  rememberMe: false,
-  loginType: 'user' // 默认为普通用户登录
+  rememberMe: false
 })
 
 // 表单验证规则
@@ -124,28 +115,25 @@ const handleLogin = async () => {
     
     const response = await login({
       account: loginForm.account,
-      password: loginForm.password,
-      rememberMe: loginForm.rememberMe,
-      userType: loginForm.loginType
+      password: loginForm.password
     })
     
     if (response.data) {
-      // 保存登录信息到store，确保用户信息包含用户类型
+      // 保存登录信息到store
       authStore.setToken(response.data.accessToken)
       authStore.setRefreshToken(response.data.refreshToken)
-      
-      // 确保用户信息包含用户类型
-      const userInfo = {
-        ...response.data.userInfo,
-        userType: loginForm.loginType  // 保存登录时选择的用户类型
-      }
-      authStore.setUserInfo(userInfo)
+      authStore.setUserInfo(response.data.userInfo)
       
       ElMessage.success('登录成功')
       
-      // 根据登录类型跳转到不同页面
-      if (loginForm.loginType === 'admin') {
-        // 管理员登录，跳转到管理后台
+      // 根据角色跳转到不同页面
+      const roleCode = response.data.userInfo?.roleCode
+      
+      if (roleCode === 'SUPER_ADMIN') {
+        // 超级管理员登录，跳转到超管后台
+        router.push('/super-admin/merchants')
+      } else if (roleCode === 'HOMESTAY_ADMIN') {
+        // 民宿主管理员登录，跳转到管理后台
         router.push('/admin')
       } else {
         // 普通用户登录，跳转到用户首页

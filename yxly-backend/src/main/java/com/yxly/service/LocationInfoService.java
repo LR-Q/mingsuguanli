@@ -14,40 +14,49 @@ public interface LocationInfoService {
      *
      * @param current 当前页
      * @param size 每页大小
+     * @param merchantId 商户ID（超级管理员传null查看所有）
+     * @param roleCode 角色代码
      * @return 位置信息分页结果
      */
-    IPage<LocationResponse> getLocationPage(Long current, Long size);
+    IPage<LocationResponse> getLocationPage(Long current, Long size, Long merchantId, String roleCode);
 
     /**
      * 获取位置信息详情
      *
      * @param id 位置ID
+     * @param merchantId 商户ID（用于权限验证）
+     * @param roleCode 角色代码
      * @return 位置信息
      */
-    LocationResponse getLocationById(Long id);
+    LocationResponse getLocationById(Long id, Long merchantId, String roleCode);
 
     /**
      * 创建位置信息
      *
      * @param request 位置信息请求
+     * @param merchantId 商户ID
      * @return 位置ID
      */
-    Long createLocation(LocationUpdateRequest request);
+    Long createLocation(LocationUpdateRequest request, Long merchantId);
 
     /**
      * 更新位置信息
      *
      * @param id 位置ID
      * @param request 位置信息请求
+     * @param merchantId 商户ID（用于权限验证）
+     * @param roleCode 角色代码
      */
-    void updateLocation(Long id, LocationUpdateRequest request);
+    void updateLocation(Long id, LocationUpdateRequest request, Long merchantId, String roleCode);
 
     /**
      * 删除位置信息
      *
      * @param id 位置ID
+     * @param merchantId 商户ID（用于权限验证）
+     * @param roleCode 角色代码
      */
-    void deleteLocation(Long id);
+    void deleteLocation(Long id, Long merchantId, String roleCode);
 
     /**
      * 获取启用的位置信息（用户端）
@@ -68,6 +77,8 @@ public interface LocationInfoService {
      *
      * @param id 位置ID
      * @param isActive 是否启用
+     * @param merchantId 商户ID（用于权限验证）
+     * @param roleCode 角色代码
      */
-    void toggleLocationStatus(Long id, Integer isActive);
+    void toggleLocationStatus(Long id, Integer isActive, Long merchantId, String roleCode);
 }

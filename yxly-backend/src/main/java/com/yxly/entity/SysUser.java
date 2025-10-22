@@ -67,6 +67,18 @@ public class SysUser extends BaseEntity {
     @TableField("role_id")
     private Long roleId;
     
+    @Schema(description = "商户ID")
+    @TableField("merchant_id")
+    private Long merchantId;
+    
+    @Schema(description = "商户状态(0:待审核 1:已认证 2:已拒绝)")
+    @TableField("merchant_status")
+    private Integer merchantStatus;
+    
+    @Schema(description = "申请时间")
+    @TableField("apply_time")
+    private LocalDateTime applyTime;
+    
     @Schema(description = "状态(0:禁用 1:启用)")
     @TableField("status")
     private Integer status;

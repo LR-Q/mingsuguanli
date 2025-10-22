@@ -22,6 +22,12 @@ public class LocationInfo {
     private Long id;
 
     /**
+     * 商户ID
+     */
+    @TableField("merchant_id")
+    private Long merchantId;
+
+    /**
      * 位置名称
      */
     @TableField("name")
