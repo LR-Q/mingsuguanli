@@ -13,6 +13,10 @@ import java.math.BigDecimal;
 @Schema(description = "创建房间请求DTO")
 public class RoomCreateRequest {
 
+    @Schema(description = "民宿位置ID", required = true, example = "1")
+    @NotNull(message = "民宿位置ID不能为空")
+    private Long locationId;
+
     @Schema(description = "房间号", required = true, example = "101")
     @NotBlank(message = "房间号不能为空")
     @Size(max = 20, message = "房间号长度不能超过20个字符")

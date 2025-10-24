@@ -16,6 +16,12 @@ public class RoomResponse {
     @Schema(description = "房间ID", example = "1")
     private Long id;
 
+    @Schema(description = "民宿位置ID", example = "1")
+    private Long locationId;
+
+    @Schema(description = "民宿位置名称", example = "小饭灰1号")
+    private String locationName;
+
     @Schema(description = "房间号", example = "101")
     private String roomNumber;
 

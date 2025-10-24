@@ -36,7 +36,7 @@ public class CustomerServiceImpl implements CustomerService {
         
         // 构建查询条件
         LambdaQueryWrapper<SysUser> queryWrapper = new LambdaQueryWrapper<SysUser>()
-            .ne(SysUser::getUsername, "admin") // 排除admin用户
+            .eq(SysUser::getRoleId, 2L) // 只查询普通用户（role_id=2）
             .eq(SysUser::getDeleted, 0); // 未删除的用户
         
         // 添加搜索条件
@@ -77,7 +77,7 @@ public class CustomerServiceImpl implements CustomerService {
         SysUser user = userMapper.selectOne(
             new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getId, id)
-                .ne(SysUser::getUsername, "admin") // 不能查询admin用户
+                .eq(SysUser::getRoleId, 2L) // 只能查询普通用户
                 .eq(SysUser::getDeleted, 0)
         );
         
@@ -102,7 +102,7 @@ public class CustomerServiceImpl implements CustomerService {
         SysUser user = userMapper.selectOne(
             new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getId, id)
-                .ne(SysUser::getUsername, "admin") // 不能操作admin用户
+                .eq(SysUser::getRoleId, 2L) // 只能操作普通用户
                 .eq(SysUser::getDeleted, 0)
         );
         
@@ -132,7 +132,7 @@ public class CustomerServiceImpl implements CustomerService {
         SysUser user = userMapper.selectOne(
             new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getId, id)
-                .ne(SysUser::getUsername, "admin") // 不能删除admin用户
+                .eq(SysUser::getRoleId, 2L) // 只能删除普通用户
                 .eq(SysUser::getDeleted, 0)
         );
         

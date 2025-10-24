@@ -213,4 +213,87 @@ public class WithdrawServiceImpl implements WithdrawService {
         }
         return convertToResponse(record);
     }
+    
+    @Override
+    public IPage<WithdrawRecordResponse> getMyWithdrawRecords(Long userId, Long current, Long size, Integer status) {
+        log.info("查询用户提现记录: userId={}, current={}, size={}, status={}", userId, current, size, status);
+        
+        // 创建分页对象
+        Page<WithdrawRecord> page = new Page<>(current, size);
+        
+        // 查询条件
+        LambdaQueryWrapper<WithdrawRecord> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(WithdrawRecord::getUserId, userId)
+                   .eq(WithdrawRecord::getDeleted, 0)
+                   .eq(status != null, WithdrawRecord::getStatus, status)
+                   .orderByDesc(WithdrawRecord::getApplyTime);
+        
+        // 执行查询
+        IPage<WithdrawRecord> recordPage = withdrawRecordMapper.selectPage(page, queryWrapper);
+        
+        // 转换为响应DTO
+        Page<WithdrawRecordResponse> responsePage = new Page<>(current, size);
+        responsePage.setTotal(recordPage.getTotal());
+        responsePage.setPages(recordPage.getPages());
+        
+        java.util.List<WithdrawRecordResponse> responseList = recordPage.getRecords().stream()
+                .map(this::convertToResponse)
+                .collect(java.util.stream.Collectors.toList());
+        
+        responsePage.setRecords(responseList);
+        
+        return responsePage;
+    }
+    
+    @Override
+    @Transactional
+    public void cancelWithdraw(Long userId, Long withdrawId) {
+        log.info("用户取消提现申请: userId={}, withdrawId={}", userId, withdrawId);
+        
+        // 查询提现记录
+        WithdrawRecord withdrawRecord = withdrawRecordMapper.selectById(withdrawId);
+        if (withdrawRecord == null || withdrawRecord.getDeleted() == 1) {
+            throw new RuntimeException("提现记录不存在");
+        }
+        
+        // 验证是否是本人的记录
+        if (!withdrawRecord.getUserId().equals(userId)) {
+            throw new RuntimeException("无权操作他人的提现申请");
+        }
+        
+        // 只能取消待审核的申请
+        if (withdrawRecord.getStatus() != WithdrawStatus.PENDING.getCode()) {
+            throw new RuntimeException("只能取消待审核的提现申请");
+        }
+        
+        // 标记为已取消
+        withdrawRecord.setStatus(WithdrawStatus.REJECTED.getCode()); // 使用拒绝状态表示取消
+        withdrawRecord.setAuditTime(LocalDateTime.now());
+        withdrawRecord.setAuditRemark("用户主动取消");
+        
+        int result = withdrawRecordMapper.updateById(withdrawRecord);
+        if (result <= 0) {
+            throw new RuntimeException("取消失败，请重试");
+        }
+        
+        log.info("提现申请已取消: withdrawId={}", withdrawId);
+    }
+    
+    @Override
+    public WithdrawRecordResponse getMyWithdrawRecordById(Long userId, Long withdrawId) {
+        log.info("查询用户提现记录详情: userId={}, withdrawId={}", userId, withdrawId);
+        
+        WithdrawRecord record = withdrawRecordMapper.selectById(withdrawId);
+        if (record == null || record.getDeleted() == 1) {
+            return null;
+        }
+        
+        // 验证是否是本人的记录
+        if (!record.getUserId().equals(userId)) {
+            log.warn("用户尝试访问他人的提现记录: userId={}, recordUserId={}", userId, record.getUserId());
+            return null;
+        }
+        
+        return convertToResponse(record);
+    }
 }

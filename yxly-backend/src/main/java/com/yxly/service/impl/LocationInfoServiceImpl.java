@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yxly.common.ResultCode;
 import com.yxly.dto.request.LocationUpdateRequest;
 import com.yxly.dto.response.LocationResponse;
+import com.yxly.dto.response.LocationSimpleVO;
 import com.yxly.entity.LocationInfo;
 import com.yxly.exception.BusinessException;
 import com.yxly.mapper.LocationInfoMapper;
@@ -259,5 +260,32 @@ public class LocationInfoServiceImpl implements LocationInfoService {
         }
         
         log.info("位置状态更新成功: locationId={}, isActive={}", id, isActive);
+    }
+    
+    @Override
+    public java.util.List<LocationSimpleVO> getLocationsByMerchant(Long merchantId) {
+        log.info("获取商户的民宿位置列表: merchantId={}", merchantId);
+        
+        // 查询该商户的所有启用的民宿位置
+        LambdaQueryWrapper<LocationInfo> queryWrapper = new LambdaQueryWrapper<LocationInfo>()
+                .eq(LocationInfo::getMerchantId, merchantId)
+                .eq(LocationInfo::getIsActive, 1) // 只查询启用的
+                .eq(LocationInfo::getDeleted, 0) // 未删除
+                .orderByDesc(LocationInfo::getCreateTime);
+        
+        java.util.List<LocationInfo> locations = locationInfoMapper.selectList(queryWrapper);
+        
+        log.info("查询到{}个民宿位置", locations.size());
+        
+        // 转换为SimpleVO
+        return locations.stream().map(location -> {
+            LocationSimpleVO vo = new LocationSimpleVO();
+            vo.setId(location.getId());
+            vo.setName(location.getName());
+            vo.setAddress(location.getAddress());
+            vo.setContactPhone(location.getContactPhone());
+            vo.setIsActive(location.getIsActive());
+            return vo;
+        }).collect(java.util.stream.Collectors.toList());
     }
 }

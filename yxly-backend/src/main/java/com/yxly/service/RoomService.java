@@ -18,13 +18,14 @@ public interface RoomService {
      *
      * @param current 当前页
      * @param size 每页大小
+     * @param locationId 民宿位置ID
      * @param roomNumber 房间号
      * @param roomTypeId 房型ID
      * @param status 房间状态
      * @param floorNumber 楼层
      * @return 房间分页结果
      */
-    IPage<RoomResponse> getRoomPage(Long current, Long size, String roomNumber, 
+    IPage<RoomResponse> getRoomPage(Long current, Long size, Long locationId, String roomNumber, 
                                    Long roomTypeId, Integer status, Integer floorNumber);
 
     /**
@@ -77,13 +78,14 @@ public interface RoomService {
      *
      * @param current 当前页
      * @param size 每页大小
+     * @param locationId 民宿位置ID
      * @param roomTypeId 房型ID
      * @param maxGuests 最大入住人数
      * @param minPrice 最低价格
      * @param maxPrice 最高价格
      * @return 可用房间分页结果
      */
-    IPage<RoomResponse> getAvailableRoomsForUser(Long current, Long size, Long roomTypeId, 
+    IPage<RoomResponse> getAvailableRoomsForUser(Long current, Long size, Long locationId, Long roomTypeId, 
                                                Integer maxGuests, Double minPrice, Double maxPrice);
 
     /**

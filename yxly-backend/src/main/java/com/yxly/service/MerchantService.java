@@ -1,9 +1,11 @@
 package com.yxly.service;
 
+import com.yxly.dto.request.AdminResetPasswordRequest;
 import com.yxly.dto.request.MerchantAuditRequest;
 import com.yxly.dto.request.MerchantRegisterRequest;
 import com.yxly.dto.response.LoginResponse;
 import com.yxly.dto.response.MerchantAuditVO;
+import com.yxly.dto.response.MerchantSimpleVO;
 
 import java.util.List;
 
@@ -60,4 +62,36 @@ public interface MerchantService {
      * @return 商户详情
      */
     MerchantAuditVO getMerchantDetail(Long merchantId);
+    
+    /**
+     * 超级管理员重置商户密码
+     * 
+     * @param request 重置密码请求
+     */
+    void resetMerchantPassword(AdminResetPasswordRequest request);
+    
+    /**
+     * 获取当前管理员的民宿列表
+     * 用于房间管理页面的民宿选择
+     * 
+     * @param adminUserId 管理员用户ID
+     * @return 民宿列表
+     */
+    List<MerchantSimpleVO> getAdminMerchants(Long adminUserId);
+    
+    /**
+     * 根据管理员用户ID获取商户信息
+     * 
+     * @param adminUserId 管理员用户ID
+     * @return 商户信息
+     */
+    com.yxly.entity.MerchantInfo getMerchantByAdminUserId(Long adminUserId);
+    
+    /**
+     * 根据用户名获取用户信息
+     * 
+     * @param username 用户名
+     * @return 用户信息
+     */
+    com.yxly.entity.SysUser getUserByUsername(String username);
 }

@@ -230,6 +230,28 @@ const superAdminRoutes = [
           requiresAuth: true,
           requiresSuperAdmin: true
         }
+      },
+      {
+        path: 'recharge',
+        name: 'SuperAdminRecharge',
+        component: () => import('@/pages/super-admin/RechargeManagement.vue'),
+        meta: {
+          title: '充值管理',
+          icon: 'CreditCard',
+          requiresAuth: true,
+          requiresSuperAdmin: true
+        }
+      },
+      {
+        path: 'withdraw',
+        name: 'SuperAdminWithdraw',
+        component: () => import('@/pages/super-admin/WithdrawManagement.vue'),
+        meta: {
+          title: '提现管理',
+          icon: 'Money',
+          requiresAuth: true,
+          requiresSuperAdmin: true
+        }
       }
     ]
   }
@@ -292,22 +314,11 @@ const adminRoutes = [
         }
       },
       {
-        path: 'recharge',
-        name: 'RechargeManagement',
-        component: () => import('@/pages/admin/RechargeManagement.vue'),
+        path: 'withdraw-apply',
+        name: 'WithdrawApply',
+        component: () => import('@/pages/merchant/WithdrawApply.vue'),
         meta: {
-          title: '充值管理',
-          icon: 'Wallet',
-          requiresAuth: true,
-          requiresAdmin: true
-        }
-      },
-      {
-        path: 'withdraw',
-        name: 'WithdrawManagement',
-        component: () => import('@/pages/admin/WithdrawManagement.vue'),
-        meta: {
-          title: '提现管理',
+          title: '提现申请',
           icon: 'Money',
           requiresAuth: true,
           requiresAdmin: true
@@ -459,18 +470,12 @@ router.beforeEach(async (to, from, next) => {
     const roleCode = authStore.userInfo?.roleCode
     const isUserPage = to.path === '/home' || to.path.startsWith('/rooms') || to.path.startsWith('/user-center')
     
-    if (isUserPage) {
-      if (roleCode === 'SUPER_ADMIN') {
-        // 超级管理员不能访问用户页面，重定向到超管后台
-        ElMessage.warning('超级管理员请使用管理后台')
-        next('/super-admin/merchants')
-        return
-      } else if (roleCode === 'HOMESTAY_ADMIN') {
-        // 民宿管理员不能访问用户页面，重定向到管理后台
-        ElMessage.warning('管理员请使用管理后台')
-        next('/admin')
-        return
-      }
+    if (isUserPage && (roleCode === 'SUPER_ADMIN' || roleCode === 'HOMESTAY_ADMIN')) {
+      ElMessage.warning('管理员请访问管理后台：http://localhost:3001')
+      // 清除登录状态，要求重新登录
+      authStore.clearUserInfo()
+      next('/login')
+      return
     }
   }
   

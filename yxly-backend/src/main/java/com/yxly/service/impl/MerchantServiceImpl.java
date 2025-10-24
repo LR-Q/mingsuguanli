@@ -2,11 +2,13 @@ package com.yxly.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.yxly.common.ResultCode;
+import com.yxly.dto.request.AdminResetPasswordRequest;
 import com.yxly.dto.request.LoginRequest;
 import com.yxly.dto.request.MerchantAuditRequest;
 import com.yxly.dto.request.MerchantRegisterRequest;
 import com.yxly.dto.response.LoginResponse;
 import com.yxly.dto.response.MerchantAuditVO;
+import com.yxly.dto.response.MerchantSimpleVO;
 import com.yxly.entity.MerchantInfo;
 import com.yxly.entity.SysRole;
 import com.yxly.entity.SysUser;
@@ -270,6 +272,43 @@ public class MerchantServiceImpl implements MerchantService {
         return convertToVO(merchantInfo);
     }
     
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void resetMerchantPassword(AdminResetPasswordRequest request) {
+        log.info("超级管理员重置商户密码: merchantId={}", request.getMerchantId());
+        
+        // 查询商户信息
+        MerchantInfo merchantInfo = merchantInfoMapper.selectById(request.getMerchantId());
+        if (merchantInfo == null || merchantInfo.getDeleted() == 1) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "商户不存在");
+        }
+        
+        // 查询商户关联的管理员用户
+        SysUser user = userMapper.selectById(merchantInfo.getAdminUserId());
+        if (user == null || user.getDeleted() == 1) {
+            throw new BusinessException(ResultCode.USER_NOT_FOUND, "商户管理员账号不存在");
+        }
+        
+        // 检查用户状态
+        if (user.getStatus() == 0) {
+            throw new BusinessException(ResultCode.USER_DISABLED, "商户账号已被禁用");
+        }
+        
+        // 加密新密码
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+        user.setPassword(encodedPassword);
+        user.setUpdateTime(LocalDateTime.now());
+        
+        // 更新密码
+        int updateResult = userMapper.updateById(user);
+        if (updateResult <= 0) {
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "密码重置失败，请稍后重试");
+        }
+        
+        log.info("商户密码重置成功: merchantId={}, username={}, merchantName={}", 
+                request.getMerchantId(), user.getUsername(), merchantInfo.getMerchantName());
+    }
+    
     /**
      * 转换为VO对象
      */
@@ -287,5 +326,60 @@ public class MerchantServiceImpl implements MerchantService {
         }
         
         return vo;
+    }
+    
+    @Override
+    public List<MerchantSimpleVO> getAdminMerchants(Long adminUserId) {
+        log.info("获取管理员的民宿列表: adminUserId={}", adminUserId);
+        
+        // 查询该管理员的所有已审核通过的民宿
+        LambdaQueryWrapper<MerchantInfo> queryWrapper = new LambdaQueryWrapper<MerchantInfo>()
+                .eq(MerchantInfo::getAdminUserId, adminUserId)
+                .eq(MerchantInfo::getAuditStatus, 1) // 已审核通过
+                .eq(MerchantInfo::getStatus, 1) // 已启用
+                .eq(MerchantInfo::getDeleted, 0); // 未删除
+        
+        List<MerchantInfo> merchants = merchantInfoMapper.selectList(queryWrapper);
+        
+        // 转换为SimpleVO
+        return merchants.stream().map(merchant -> {
+            MerchantSimpleVO vo = new MerchantSimpleVO();
+            vo.setId(merchant.getId());
+            vo.setMerchantName(merchant.getMerchantName());
+            vo.setMerchantCode(merchant.getMerchantCode());
+            vo.setAddress(merchant.getAddress());
+            vo.setRoomCount(merchant.getRoomCount());
+            return vo;
+        }).collect(Collectors.toList());
+    }
+    
+    @Override
+    public MerchantInfo getMerchantByAdminUserId(Long adminUserId) {
+        log.info("根据管理员用户ID获取商户信息: adminUserId={}", adminUserId);
+        
+        LambdaQueryWrapper<MerchantInfo> queryWrapper = new LambdaQueryWrapper<MerchantInfo>()
+                .eq(MerchantInfo::getAdminUserId, adminUserId)
+                .eq(MerchantInfo::getDeleted, 0)
+                .last("LIMIT 1");
+        
+        return merchantInfoMapper.selectOne(queryWrapper);
+    }
+    
+    @Override
+    public SysUser getUserByUsername(String username) {
+        log.info("根据用户名获取用户信息: username={}", username);
+        
+        LambdaQueryWrapper<SysUser> queryWrapper = new LambdaQueryWrapper<SysUser>()
+                .and(wrapper -> wrapper
+                    .eq(SysUser::getUsername, username)
+                    .or()
+                    .eq(SysUser::getEmail, username)
+                    .or()
+                    .eq(SysUser::getPhone, username)
+                )
+                .eq(SysUser::getDeleted, 0)
+                .last("LIMIT 1");
+        
+        return userMapper.selectOne(queryWrapper);
     }
 }

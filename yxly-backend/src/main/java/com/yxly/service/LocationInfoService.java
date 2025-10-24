@@ -3,6 +3,7 @@ package com.yxly.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.yxly.dto.request.LocationUpdateRequest;
 import com.yxly.dto.response.LocationResponse;
+import com.yxly.dto.response.LocationSimpleVO;
 
 /**
  * 位置信息服务接口
@@ -81,4 +82,12 @@ public interface LocationInfoService {
      * @param roleCode 角色代码
      */
     void toggleLocationStatus(Long id, Integer isActive, Long merchantId, String roleCode);
+    
+    /**
+     * 获取指定商户的民宿位置列表（用于房间管理页面的下拉选择）
+     *
+     * @param merchantId 商户ID
+     * @return 民宿位置列表
+     */
+    java.util.List<LocationSimpleVO> getLocationsByMerchant(Long merchantId);
 }

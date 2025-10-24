@@ -5,8 +5,12 @@ import com.yxly.common.PageResult;
 import com.yxly.common.Result;
 import com.yxly.dto.request.RoomCreateRequest;
 import com.yxly.dto.request.RoomUpdateRequest;
+import com.yxly.dto.response.LocationSimpleVO;
 import com.yxly.dto.response.RoomResponse;
 import com.yxly.dto.response.RoomTypeResponse;
+import com.yxly.entity.MerchantInfo;
+import com.yxly.service.LocationInfoService;
+import com.yxly.service.MerchantService;
 import com.yxly.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,21 +36,24 @@ import java.util.List;
 public class RoomController {
 
     private final RoomService roomService;
+    private final MerchantService merchantService;
+    private final LocationInfoService locationInfoService;
 
     @Operation(summary = "分页查询房间列表", description = "分页查询房间列表，支持多条件筛选")
     @GetMapping
     public Result<PageResult<RoomResponse>> getRoomPage(
             @Parameter(description = "当前页", example = "1") @RequestParam(defaultValue = "1") Long current,
             @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Long size,
+            @Parameter(description = "民宿位置ID") @RequestParam(required = false) Long locationId,
             @Parameter(description = "房间号") @RequestParam(required = false) String roomNumber,
             @Parameter(description = "房型ID") @RequestParam(required = false) Long roomTypeId,
             @Parameter(description = "房间状态") @RequestParam(required = false) Integer status,
             @Parameter(description = "楼层") @RequestParam(required = false) Integer floorNumber) {
         
-        log.info("分页查询房间列表: current={}, size={}, roomNumber={}, roomTypeId={}, status={}, floorNumber={}", 
-                current, size, roomNumber, roomTypeId, status, floorNumber);
+        log.info("分页查询房间列表: current={}, size={}, locationId={}, roomNumber={}, roomTypeId={}, status={}, floorNumber={}", 
+                current, size, locationId, roomNumber, roomTypeId, status, floorNumber);
         
-        IPage<RoomResponse> page = roomService.getRoomPage(current, size, roomNumber, roomTypeId, status, floorNumber);
+        IPage<RoomResponse> page = roomService.getRoomPage(current, size, locationId, roomNumber, roomTypeId, status, floorNumber);
         
         PageResult<RoomResponse> result = PageResult.of(
                 page.getTotal(),
@@ -122,6 +129,36 @@ public class RoomController {
         
         roomService.updateRoomStatus(id, status);
         return Result.success(null, "房间状态更新成功");
+    }
+    
+    @Operation(summary = "获取当前管理员的民宿位置列表", description = "用于房间管理页面的民宿选择下拉框")
+    @GetMapping("/locations")
+    public Result<List<LocationSimpleVO>> getAdminLocations(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String token) {
+        log.info("获取当前管理员的民宿位置列表");
+        
+        // 从 Spring Security 获取当前用户
+        String currentUsername = org.springframework.security.core.context.SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+        
+        log.info("当前登录用户: {}", currentUsername);
+        
+        // 通过用户名获取用户ID
+        com.yxly.entity.SysUser currentUser = merchantService.getUserByUsername(currentUsername);
+        if (currentUser == null) {
+            return Result.success(java.util.Collections.emptyList(), "用户不存在");
+        }
+        
+        // 获取当前用户的商户ID
+        MerchantInfo merchantInfo = merchantService.getMerchantByAdminUserId(currentUser.getId());
+        if (merchantInfo == null) {
+            return Result.success(java.util.Collections.emptyList(), "当前用户未关联商户");
+        }
+        
+        List<LocationSimpleVO> locations = locationInfoService.getLocationsByMerchant(merchantInfo.getId());
+        return Result.success(locations, "查询成功");
     }
 }
 

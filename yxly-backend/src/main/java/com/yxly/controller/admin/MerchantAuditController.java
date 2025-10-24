@@ -1,6 +1,7 @@
 package com.yxly.controller.admin;
 
 import com.yxly.common.Result;
+import com.yxly.dto.request.AdminResetPasswordRequest;
 import com.yxly.dto.request.MerchantAuditRequest;
 import com.yxly.dto.response.MerchantAuditVO;
 import com.yxly.service.MerchantService;
@@ -72,5 +73,16 @@ public class MerchantAuditController {
         log.info("查询商户详情: merchantId={}", merchantId);
         MerchantAuditVO detail = merchantService.getMerchantDetail(merchantId);
         return Result.success(detail);
+    }
+    
+    /**
+     * 重置商户密码
+     */
+    @PostMapping("/reset-password")
+    @Operation(summary = "重置商户密码", description = "超级管理员重置商户管理员账号密码")
+    public Result<Void> resetMerchantPassword(@Valid @RequestBody AdminResetPasswordRequest request) {
+        log.info("重置商户密码: merchantId={}", request.getMerchantId());
+        merchantService.resetMerchantPassword(request);
+        return Result.success(null, "密码重置成功");
     }
 }

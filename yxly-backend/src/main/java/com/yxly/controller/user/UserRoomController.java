@@ -32,17 +32,18 @@ public class UserRoomController {
     public Result<PageResult<RoomResponse>> getAvailableRooms(
             @Parameter(description = "当前页", example = "1") @RequestParam(defaultValue = "1") Long current,
             @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Long size,
+            @Parameter(description = "民宿位置ID") @RequestParam(required = false) Long locationId,
             @Parameter(description = "房型ID") @RequestParam(required = false) Long roomTypeId,
             @Parameter(description = "最大入住人数") @RequestParam(required = false) Integer maxGuests,
             @Parameter(description = "最低价格") @RequestParam(required = false) Double minPrice,
             @Parameter(description = "最高价格") @RequestParam(required = false) Double maxPrice) {
         
-        log.info("用户查询可用房间: current={}, size={}, roomTypeId={}, maxGuests={}, minPrice={}, maxPrice={}", 
-                current, size, roomTypeId, maxGuests, minPrice, maxPrice);
+        log.info("用户查询可用房间: current={}, size={}, locationId={}, roomTypeId={}, maxGuests={}, minPrice={}, maxPrice={}", 
+                current, size, locationId, roomTypeId, maxGuests, minPrice, maxPrice);
         
         // 只查询状态为可用(1)的房间
         IPage<RoomResponse> page = roomService.getAvailableRoomsForUser(
-            current, size, roomTypeId, maxGuests, minPrice, maxPrice);
+            current, size, locationId, roomTypeId, maxGuests, minPrice, maxPrice);
         
         PageResult<RoomResponse> result = PageResult.of(
                 page.getTotal(),
@@ -86,18 +87,19 @@ public class UserRoomController {
     public Result<PageResult<RoomResponse>> searchRooms(
             @Parameter(description = "当前页", example = "1") @RequestParam(defaultValue = "1") Long current,
             @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Long size,
+            @Parameter(description = "民宿位置ID") @RequestParam(required = false) Long locationId,
             @Parameter(description = "入住日期", example = "2024-10-20") @RequestParam(required = false) String checkIn,
             @Parameter(description = "退房日期", example = "2024-10-22") @RequestParam(required = false) String checkOut,
             @Parameter(description = "入住人数") @RequestParam(required = false) Integer guests,
             @Parameter(description = "房型ID") @RequestParam(required = false) Long roomTypeId) {
         
-        log.info("用户搜索房间: checkIn={}, checkOut={}, guests={}, roomTypeId={}", 
-                checkIn, checkOut, guests, roomTypeId);
+        log.info("用户搜索房间: locationId={}, checkIn={}, checkOut={}, guests={}, roomTypeId={}", 
+                locationId, checkIn, checkOut, guests, roomTypeId);
         
         // 这里可以后续集成订单系统来检查房间在指定日期的可用性
         // 目前先返回基本的可用房间列表
         IPage<RoomResponse> page = roomService.getAvailableRoomsForUser(
-            current, size, roomTypeId, guests, null, null);
+            current, size, locationId, roomTypeId, guests, null, null);
         
         PageResult<RoomResponse> result = PageResult.of(
                 page.getTotal(),

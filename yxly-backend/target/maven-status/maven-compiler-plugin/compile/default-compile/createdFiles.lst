@@ -3,6 +3,7 @@ com\yxly\entity\BookingOrder.class
 com\yxly\common\ResultCode.class
 com\yxly\service\LocationInfoService.class
 com\yxly\service\MerchantService.class
+com\yxly\controller\superadmin\RechargeManagementController.class
 com\yxly\service\impl\CustomerServiceImpl.class
 com\yxly\controller\auth\AuthController.class
 com\yxly\mapper\MerchantInfoMapper.class
@@ -14,6 +15,7 @@ com\yxly\dto\request\RoomUpdateRequest.class
 com\yxly\exception\GlobalExceptionHandler.class
 com\yxly\dto\response\MerchantAuditVO.class
 com\yxly\dto\response\WithdrawRecordResponse.class
+com\yxly\controller\merchant\WithdrawApplyController.class
 com\yxly\controller\admin\LocationController.class
 com\yxly\entity\FinancialRecord.class
 com\yxly\enums\RoomStatus.class
@@ -54,6 +56,7 @@ com\yxly\dto\response\RoomResponse.class
 com\yxly\mapper\UserFavoriteMapper.class
 com\yxly\dto\request\WithdrawApplyRequest.class
 com\yxly\service\RoomService.class
+com\yxly\controller\superadmin\WithdrawManagementController.class
 com\yxly\config\MinioConfig.class
 com\yxly\controller\user\UserRoomController.class
 com\yxly\dto\response\CustomerResponse.class
@@ -73,6 +76,7 @@ com\yxly\mapper\LocationInfoMapper.class
 com\yxly\mapper\SysUserMapper.class
 com\yxly\entity\MerchantInfo.class
 com\yxly\service\RechargeService.class
+com\yxly\dto\response\LocationSimpleVO.class
 com\yxly\security\UserDetailsServiceImpl.class
 com\yxly\dto\request\WithdrawAuditRequest.class
 com\yxly\config\MyBatisPlusConfig.class
@@ -96,6 +100,7 @@ com\yxly\dto\response\LocationResponse.class
 com\yxly\dto\response\RoomTypeResponse.class
 com\yxly\dto\request\LoginRequest.class
 com\yxly\dto\request\MerchantRegisterRequest.class
+com\yxly\dto\response\MerchantSimpleVO.class
 com\yxly\service\impl\LocationInfoServiceImpl.class
 com\yxly\mapper\RoomTypeMapper.class
 com\yxly\controller\user\UserController.class
@@ -108,6 +113,7 @@ com\yxly\dto\request\LocationUpdateRequest.class
 com\yxly\dto\request\RegisterRequest.class
 com\yxly\mapper\WithdrawRecordMapper.class
 com\yxly\mapper\BookingOrderMapper.class
+com\yxly\dto\request\AdminResetPasswordRequest.class
 com\yxly\dto\request\RechargeApplyRequest.class
 com\yxly\controller\user\UserRechargeController.class
 com\yxly\entity\RechargeRecord.class

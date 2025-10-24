@@ -16,9 +16,10 @@ import org.apache.ibatis.annotations.Select;
 public interface RoomInfoMapper extends BaseMapper<RoomInfo> {
 
     /**
-     * 分页查询房间信息（包含房型名称）
+     * 分页查询房间信息（包含房型名称和民宿位置名称）
      *
      * @param page 分页参数
+     * @param locationId 民宿位置ID
      * @param roomNumber 房间号
      * @param roomTypeId 房型ID
      * @param status 房间状态
@@ -26,10 +27,14 @@ public interface RoomInfoMapper extends BaseMapper<RoomInfo> {
      * @return 房间信息分页结果
      */
     @Select("<script>" +
-            "SELECT r.*, rt.type_name as room_type_name " +
+            "SELECT r.*, rt.type_name as room_type_name, l.name as location_name " +
             "FROM room_info r " +
             "LEFT JOIN room_type rt ON r.room_type_id = rt.id " +
+            "LEFT JOIN location_info l ON r.location_id = l.id " +
             "WHERE r.deleted = 0 " +
+            "<if test='locationId != null'>" +
+            "AND r.location_id = #{locationId} " +
+            "</if>" +
             "<if test='roomNumber != null and roomNumber != \"\"'>" +
             "AND r.room_number LIKE CONCAT('%', #{roomNumber}, '%') " +
             "</if>" +
@@ -45,6 +50,7 @@ public interface RoomInfoMapper extends BaseMapper<RoomInfo> {
             "ORDER BY r.room_number ASC" +
             "</script>")
     IPage<RoomResponse> selectRoomPage(Page<RoomResponse> page,
+                                       @Param("locationId") Long locationId,
                                        @Param("roomNumber") String roomNumber,
                                        @Param("roomTypeId") Long roomTypeId,
                                        @Param("status") Integer status,
@@ -60,14 +66,15 @@ public interface RoomInfoMapper extends BaseMapper<RoomInfo> {
     RoomInfo selectByRoomNumber(@Param("roomNumber") String roomNumber);
 
     /**
-     * 根据房间ID查询房间详情（包含房型信息）
+     * 根据房间ID查询房间详情（包含房型信息和民宿位置信息）
      *
      * @param id 房间ID
      * @return 房间详情
      */
-    @Select("SELECT r.*, rt.type_name as room_type_name " +
+    @Select("SELECT r.*, rt.type_name as room_type_name, l.name as location_name " +
             "FROM room_info r " +
             "LEFT JOIN room_type rt ON r.room_type_id = rt.id " +
+            "LEFT JOIN location_info l ON r.location_id = l.id " +
             "WHERE r.id = #{id} AND r.deleted = 0")
     RoomResponse selectRoomDetail(@Param("id") Long id);
 }

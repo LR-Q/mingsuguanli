@@ -176,9 +176,11 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/modules/auth'
 import { changePassword } from '@/api/modules/auth'
+import { uploadAvatar, updateUserProfile, getCurrentUserInfo } from '@/api/modules/user'
 
 const authStore = useAuthStore()
 
@@ -288,21 +290,29 @@ const handleSave = async () => {
     
     saving.value = true
     
-    // 这里调用API保存用户信息
-    // await updateUserProfile(profileForm)
+    // 调用API保存用户信息
+    const updateData = {
+      realName: profileForm.realName,
+      email: profileForm.email,
+      phone: profileForm.phone,
+      avatar: profileForm.avatar
+    }
     
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    const response = await updateUserProfile(updateData)
     
     ElMessage.success('个人信息更新成功')
     editMode.value = false
     
     // 更新store中的用户信息
-    authStore.updateUserInfo(profileForm)
+    if (response.data) {
+      authStore.updateUserInfo(response.data)
+      // 备份新数据
+      Object.assign(originalData, profileForm)
+    }
     
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error('保存失败，请重试')
+    ElMessage.error(error.message || '保存失败，请重试')
   } finally {
     saving.value = false
   }
@@ -333,21 +343,30 @@ const beforeAvatarUpload = (file) => {
 // 头像上传处理
 const handleAvatarUpload = async (options) => {
   try {
-    // 这里实现头像上传逻辑
-    // const formData = new FormData()
-    // formData.append('avatar', options.file)
-    // const response = await uploadAvatar(formData)
+    // 上传到MinIO
+    const formData = new FormData()
+    formData.append('file', options.file)
     
-    // 模拟上传成功
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    const response = await uploadAvatar(formData)
     
-    // 更新头像URL
-    profileForm.avatar = URL.createObjectURL(options.file)
-    
-    ElMessage.success('头像上传成功')
+    if (response.data && response.data.url) {
+      // 更新头像URL
+      profileForm.avatar = response.data.url
+      
+      // 自动保存到数据库
+      await updateUserProfile({ avatar: response.data.url })
+      
+      // 更新store
+      const userInfo = await getCurrentUserInfo()
+      if (userInfo.data) {
+        authStore.updateUserInfo(userInfo.data)
+      }
+      
+      ElMessage.success('头像上传成功')
+    }
   } catch (error) {
     console.error('头像上传失败:', error)
-    ElMessage.error('头像上传失败，请重试')
+    ElMessage.error(error.message || '头像上传失败，请重试')
   }
 }
 

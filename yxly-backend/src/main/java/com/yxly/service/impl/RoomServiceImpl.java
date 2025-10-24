@@ -47,13 +47,13 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public IPage<RoomResponse> getRoomPage(Long current, Long size, String roomNumber, 
+    public IPage<RoomResponse> getRoomPage(Long current, Long size, Long locationId, String roomNumber, 
                                           Long roomTypeId, Integer status, Integer floorNumber) {
-        log.info("分页查询房间列表: current={}, size={}, roomNumber={}, roomTypeId={}, status={}, floorNumber={}", 
-                current, size, roomNumber, roomTypeId, status, floorNumber);
+        log.info("分页查询房间列表: current={}, size={}, locationId={}, roomNumber={}, roomTypeId={}, status={}, floorNumber={}", 
+                current, size, locationId, roomNumber, roomTypeId, status, floorNumber);
         
         Page<RoomResponse> page = new Page<>(current, size);
-        IPage<RoomResponse> result = roomInfoMapper.selectRoomPage(page, roomNumber, roomTypeId, status, floorNumber);
+        IPage<RoomResponse> result = roomInfoMapper.selectRoomPage(page, locationId, roomNumber, roomTypeId, status, floorNumber);
         
         // 设置状态名称
         result.getRecords().forEach(room -> {
@@ -199,15 +199,16 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public IPage<RoomResponse> getAvailableRoomsForUser(Long current, Long size, Long roomTypeId, 
+    public IPage<RoomResponse> getAvailableRoomsForUser(Long current, Long size, Long locationId, Long roomTypeId, 
                                                       Integer maxGuests, Double minPrice, Double maxPrice) {
-        log.info("用户查询可用房间: roomTypeId={}, maxGuests={}, minPrice={}, maxPrice={}", 
-                roomTypeId, maxGuests, minPrice, maxPrice);
+        log.info("用户查询可用房间: locationId={}, roomTypeId={}, maxGuests={}, minPrice={}, maxPrice={}", 
+                locationId, roomTypeId, maxGuests, minPrice, maxPrice);
         
         Page<RoomResponse> page = new Page<>(current, size);
         
         // 执行查询 - 只查询可用状态的房间
-        IPage<RoomResponse> result = roomInfoMapper.selectRoomPage(page, null, roomTypeId, 1, null);
+        // selectRoomPage(page, locationId, roomNumber, roomTypeId, status, floorNumber)
+        IPage<RoomResponse> result = roomInfoMapper.selectRoomPage(page, locationId, null, roomTypeId, 1, null);
         
         // 过滤结果（根据最大入住人数和价格）
         if (maxGuests != null || minPrice != null || maxPrice != null) {

@@ -22,6 +22,13 @@ public class RoomInfo {
     private Long id;
 
     /**
+     * 民宿位置ID（关联location_info表）
+     * 用于区分房间属于哪个具体的民宿位置
+     */
+    @TableField("location_id")
+    private Long locationId;
+
+    /**
      * 房间号
      */
     @TableField("room_number")

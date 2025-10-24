@@ -119,26 +119,24 @@ const handleLogin = async () => {
     })
     
     if (response.data) {
+      const { accessToken, refreshToken, userInfo } = response.data
+      const roleCode = userInfo?.roleCode
+      
+      // 用户端只允许普通用户登录
+      if (roleCode === 'SUPER_ADMIN' || roleCode === 'HOMESTAY_ADMIN') {
+        ElMessage.warning('管理员请访问管理后台登录：http://localhost:3001')
+        return
+      }
+      
       // 保存登录信息到store
-      authStore.setToken(response.data.accessToken)
-      authStore.setRefreshToken(response.data.refreshToken)
-      authStore.setUserInfo(response.data.userInfo)
+      authStore.setToken(accessToken)
+      authStore.setRefreshToken(refreshToken)
+      authStore.setUserInfo(userInfo)
       
       ElMessage.success('登录成功')
       
-      // 根据角色跳转到不同页面
-      const roleCode = response.data.userInfo?.roleCode
-      
-      if (roleCode === 'SUPER_ADMIN') {
-        // 超级管理员登录，跳转到超管后台
-        router.push('/super-admin/merchants')
-      } else if (roleCode === 'HOMESTAY_ADMIN') {
-        // 民宿主管理员登录，跳转到管理后台
-        router.push('/admin')
-      } else {
-        // 普通用户登录，跳转到用户首页
-        router.push('/home')
-      }
+      // 跳转到用户首页
+      router.push('/home')
     }
   } catch (error) {
     console.error('登录失败:', error)

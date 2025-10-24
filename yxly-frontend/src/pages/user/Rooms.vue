@@ -10,6 +10,22 @@
       <div class="search-section">
         <el-card>
           <el-form :model="searchForm" inline>
+            <el-form-item label="民宿位置">
+              <el-select 
+                v-model="searchForm.locationId" 
+                placeholder="全部民宿" 
+                clearable
+                style="width: 180px;"
+                @change="searchRooms"
+              >
+                <el-option
+                  v-for="location in locations"
+                  :key="location.id"
+                  :label="location.name"
+                  :value="location.id"
+                />
+              </el-select>
+            </el-form-item>
             <el-form-item label="入住日期">
               <el-date-picker
                 v-model="searchForm.checkIn"
@@ -138,6 +154,10 @@
             <div class="room-content">
               <div class="room-info">
                 <h3>{{ room.name }}</h3>
+                <p class="room-location" v-if="room.locationName">
+                  <el-icon><Location /></el-icon>
+                  {{ room.locationName }}
+                </p>
                 <p class="room-desc">{{ room.description || '舒适温馨的房间，为您提供优质的住宿体验' }}</p>
                 <div class="room-features" v-if="room.facilities && room.facilities.length > 0">
                   <div class="feature-list">
@@ -196,8 +216,8 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Picture, User, Expand, Check, ArrowLeft, ArrowRight, Star, StarFilled } from '@element-plus/icons-vue'
-import { getAvailableRooms, getUserRoomTypes, searchRooms as searchRoomsAPI } from '@/api/modules/userRoom'
+import { Picture, User, Expand, Check, ArrowLeft, ArrowRight, Star, StarFilled, Location } from '@element-plus/icons-vue'
+import { getAvailableRooms, getUserRoomTypes, searchRooms as searchRoomsAPI, getUserLocations } from '@/api/modules/userRoom'
 import { addFavorite, removeFavorite, checkMultipleFavorites } from '@/api/modules/favorite'
 
 const router = useRouter()
@@ -208,11 +228,13 @@ const loading = ref(false)
 const hasMore = ref(true)
 const rooms = ref([])
 const roomTypes = ref([])
+const locations = ref([])
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(6)
 
 const searchForm = reactive({
+  locationId: null,
   checkIn: route.query.checkIn || '',
   checkOut: route.query.checkOut || '',
   guests: route.query.guests || null, // 默认不筛选入住人数
@@ -227,6 +249,7 @@ const loadRooms = async (isLoadMore = false) => {
     const params = {
       current: isLoadMore ? currentPage.value + 1 : 1,
       size: pageSize.value,
+      locationId: searchForm.locationId || null,
       roomTypeId: searchForm.roomTypeId || null
       // 注意：初始加载时不过滤入住人数，让用户看到所有可用房间
     }
@@ -309,6 +332,16 @@ const loadRoomTypes = async () => {
   }
 }
 
+// 加载民宿位置列表
+const loadLocations = async () => {
+  try {
+    const response = await getUserLocations()
+    locations.value = response.data || []
+  } catch (error) {
+    console.error('加载民宿位置列表失败:', error)
+  }
+}
+
 // 搜索验证
 const validateSearchForm = () => {
   // 如果选择了入住日期和退房日期，验证日期逻辑
@@ -344,6 +377,7 @@ const searchRooms = async () => {
     const params = {
       current: 1,
       size: pageSize.value,
+      locationId: searchForm.locationId || null,
       checkIn: searchForm.checkIn || null,
       checkOut: searchForm.checkOut || null,
       guests: searchForm.guests || null,
@@ -535,6 +569,7 @@ const toggleFavorite = async (room) => {
 
 onMounted(() => {
   // 初始化加载
+  loadLocations()
   loadRoomTypes()
   loadRooms()
 })
@@ -719,6 +754,20 @@ onMounted(() => {
             font-weight: 600;
             color: #303133;
             margin-bottom: 8px;
+          }
+          
+          .room-location {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: #409eff;
+            margin-bottom: 8px;
+            font-weight: 500;
+            
+            .el-icon {
+              font-size: 14px;
+            }
           }
           
           .room-desc {

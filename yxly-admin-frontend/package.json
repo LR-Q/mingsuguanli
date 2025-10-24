@@ -1,0 +1,37 @@
+{
+  "name": "yxly-admin-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "悦鑫乐怡民宿管理系统 - 管理后台",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext vue,js,ts,jsx,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext vue,js,ts,jsx,tsx --fix"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.6.5",
+    "dayjs": "^1.11.10",
+    "element-plus": "^2.4.4",
+    "js-cookie": "^3.0.5",
+    "nprogress": "^0.2.0",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.15",
+    "vue-router": "^4.2.5",
+    "vuedraggable": "^4.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.3",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "eslint": "^8.56.0",
+    "eslint-plugin-vue": "^9.20.1",
+    "prettier": "^3.2.4",
+    "sass": "^1.77.8",
+    "sass-embedded": "^1.77.8",
+    "unplugin-auto-import": "^0.17.3",
+    "unplugin-vue-components": "^0.26.0",
+    "vite": "^5.0.11"
+  }
+}
