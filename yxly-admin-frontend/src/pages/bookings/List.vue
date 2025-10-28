@@ -13,7 +13,7 @@
       
       <!-- 搜索区域 -->
       <div class="search-area">
-        <el-form :model="searchForm" inline>
+        <el-form :model="searchForm" inline class="search-form" label-width="80px">
           <el-form-item label="订单号">
             <el-input 
               v-model="searchForm.orderNumber" 
@@ -45,7 +45,7 @@
               <el-option label="已取消（我取消的）" value="cancelledByAdmin" />
             </el-select>
           </el-form-item>
-          <el-form-item>
+          <el-form-item class="search-actions">
             <el-button type="primary" @click="handleSearch">搜索</el-button>
             <el-button @click="handleReset">重置</el-button>
           </el-form-item>
@@ -429,6 +429,20 @@ onMounted(() => {
     padding: 20px;
     background: #f8f9fa;
     border-radius: 4px;
+    .search-form {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px 16px;
+      
+      :deep(.el-form-item) {
+        margin-right: 0; // 统一间距
+      }
+      
+      .search-actions {
+        margin-left: auto; // 将按钮推到最右
+      }
+    }
   }
   
   .pagination-wrapper {

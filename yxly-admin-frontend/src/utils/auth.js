@@ -1,8 +1,9 @@
 import Cookies from 'js-cookie'
 
-const TOKEN_KEY = 'yxly_token'
-const REFRESH_TOKEN_KEY = 'yxly_refresh_token'
-const USER_INFO_KEY = 'yxly_user_info'
+// 管理后台：使用专属键，避免与前台冲突
+const TOKEN_KEY = 'yxly_admin_token'
+const REFRESH_TOKEN_KEY = 'yxly_admin_refresh_token'
+const USER_INFO_KEY = 'yxly_admin_user_info'
 
 // 访问令牌相关
 export function getToken() {

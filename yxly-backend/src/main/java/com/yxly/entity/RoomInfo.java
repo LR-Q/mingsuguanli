@@ -53,10 +53,17 @@ public class RoomInfo {
     private BigDecimal area;
 
     /**
-     * 床型
+     * 床型（单个卧室）
      */
     @TableField("bed_type")
     private String bedType;
+
+    /**
+     * 卧室配置（多卧室房型的详细配置，JSON格式）
+     * 格式示例：{"bedrooms": [{"name": "主卧", "bedType": "大床", "bedCount": 1}]}
+     */
+    @TableField("bedroom_config")
+    private String bedroomConfig;
 
     /**
      * 最大入住人数

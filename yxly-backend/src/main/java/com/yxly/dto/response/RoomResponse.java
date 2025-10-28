@@ -37,8 +37,11 @@ public class RoomResponse {
     @Schema(description = "面积(平方米)", example = "25.5")
     private BigDecimal area;
 
-    @Schema(description = "床型", example = "double")
+    @Schema(description = "床型（单卧室房型）", example = "double")
     private String bedType;
+
+    @Schema(description = "卧室配置（多卧室房型，JSON格式）", example = "{\"bedrooms\":[{\"name\":\"主卧\",\"bedType\":\"大床\",\"bedCount\":1}]}")
+    private String bedroomConfig;
 
     @Schema(description = "最大入住人数", example = "2")
     private Integer maxGuests;
@@ -76,6 +79,10 @@ public class RoomResponse {
     @Schema(description = "更新时间", example = "2024-10-15T10:30:00")
     private LocalDateTime updateTime;
 }
+
+
+
+
 
 
 

@@ -47,13 +47,19 @@ public class RechargeServiceImpl implements RechargeService {
     @Override
     @Transactional
     public void applyRecharge(Long userId, RechargeApplyRequest request) {
-        log.info("用户申请充值: userId={}, amount={}", userId, request.getAmount());
+        log.info("=== 开始处理充值申请 ===");
+        log.info("接收到的userId: {}", userId);
+        log.info("充值金额: {}", request.getAmount());
         
         // 获取用户信息
         SysUser user = sysUserMapper.selectById(userId);
         if (user == null) {
+            log.error("用户不存在: userId={}", userId);
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
         }
+        
+        log.info("查询到的用户信息: id={}, username={}, realName={}", 
+                user.getId(), user.getUsername(), user.getRealName());
         
         // 创建充值记录
         RechargeRecord record = new RechargeRecord();
@@ -66,12 +72,17 @@ public class RechargeServiceImpl implements RechargeService {
         record.setApplyTime(LocalDateTime.now());
         record.setUserRemark(request.getUserRemark());
         
+        log.info("准备保存充值记录: userId={}, username={}", 
+                record.getUserId(), record.getUsername());
+        
         int result = rechargeRecordMapper.insert(record);
         if (result <= 0) {
             throw new BusinessException(ResultCode.OPERATION_FAILED, "充值申请提交失败");
         }
         
-        log.info("用户充值申请成功: recordId={}", record.getId());
+        log.info("充值记录保存成功: recordId={}, userId={}, username={}", 
+                record.getId(), record.getUserId(), record.getUsername());
+        log.info("=== 充值申请处理完成 ===");
     }
     
     @Override
@@ -173,6 +184,10 @@ public class RechargeServiceImpl implements RechargeService {
         return response;
     }
 }
+
+
+
+
 
 
 

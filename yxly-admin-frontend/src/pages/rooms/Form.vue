@@ -107,7 +107,8 @@
           </el-col>
         </el-row>
         
-        <el-row :gutter="20">
+        <!-- 单卧室房型 - 显示简单的床型选择 -->
+        <el-row :gutter="20" v-if="!isMultiBedroomType">
           <el-col :span="8">
             <el-form-item label="床型" prop="bedType">
               <el-select 
@@ -124,7 +125,6 @@
                 <el-option label="大床" value="大床" />
                 <el-option label="双床" value="双床" />
                 <el-option label="上下铺" value="上下铺" />
-
               </el-select>
             </el-form-item>
           </el-col>
@@ -160,6 +160,93 @@
             </el-form-item>
           </el-col>
         </el-row>
+        
+        <!-- 多卧室房型 - 显示详细的卧室配置 -->
+        <div v-if="isMultiBedroomType">
+          <el-form-item label="卧室配置" required>
+            <div style="width: 100%;">
+              <div 
+                v-for="(bedroom, index) in bedrooms" 
+                :key="index"
+                style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px; padding: 12px; background: #f5f7fa; border-radius: 4px;"
+              >
+                <div style="flex: 0 0 120px;">
+                  <el-input 
+                    v-model="bedroom.name" 
+                    placeholder="房间名称"
+                  />
+                </div>
+                <div style="flex: 0 0 150px;">
+                  <el-select 
+                    v-model="bedroom.bedType" 
+                    placeholder="床型"
+                    style="width: 100%;"
+                  >
+                    <el-option label="单人床" value="单人床" />
+                    <el-option label="双人床" value="双人床" />
+                    <el-option label="大床" value="大床" />
+                    <el-option label="双床" value="双床" />
+                    <el-option label="上下铺" value="上下铺" />
+                  </el-select>
+                </div>
+                <div style="flex: 0 0 100px;">
+                  <el-input-number 
+                    v-model="bedroom.bedCount" 
+                    :min="1" 
+                    :max="4"
+                    placeholder="床数量"
+                    style="width: 100%;"
+                  />
+                </div>
+                <el-button 
+                  v-if="bedrooms.length > 1" 
+                  type="danger" 
+                  size="small" 
+                  :icon="'Delete'"
+                  circle
+                  @click="removeBedroom(index)"
+                />
+              </div>
+              <el-button 
+                type="primary" 
+                size="small" 
+                :icon="'Plus'"
+                @click="addBedroom"
+              >
+                添加卧室
+              </el-button>
+            </div>
+          </el-form-item>
+          
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="最大入住人数" prop="maxGuests">
+                <el-input-number 
+                  v-model="formData.maxGuests" 
+                  :min="1" 
+                  :max="20"
+                  style="width: 100%"
+                />
+              </el-form-item>
+            </el-col>
+            
+            <el-col :span="12">
+              <el-form-item label="房间状态" prop="status">
+                <el-select 
+                  v-model="formData.status" 
+                  placeholder="请选择房间状态"
+                  style="width: 100%;"
+                >
+                  <el-option label="可用" :value="1" />
+                  <el-option label="占用" :value="2" />
+                  <el-option label="维修" :value="3" />
+                  <el-option label="清洁" :value="4" />
+                  <el-option label="停用" :value="5" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
         
         <el-row :gutter="20">
           <el-col :span="12">
@@ -294,11 +381,27 @@ const formData = reactive({
   facilities: [],
   description: '',
   wifiPassword: '',
-  images: []
+  images: [],
+  bedroomConfig: null // 卧室配置（JSON字符串）
 })
 
-// 表单验证规则
-const formRules = {
+// 卧室配置数组（用于多卧室房型）
+const bedrooms = ref([
+  { name: '主卧', bedType: '大床', bedCount: 1 }
+])
+
+// 判断是否为多卧室房型
+const isMultiBedroomType = computed(() => {
+  if (!formData.roomTypeId) return false
+  const selectedType = roomTypes.value.find(t => t.id === formData.roomTypeId)
+  if (!selectedType) return false
+  const typeName = selectedType.typeName || ''
+  // 判断是否包含"房"字且不是单房
+  return typeName.includes('房') && !typeName.includes('一房') && !typeName.includes('单房')
+})
+
+// 表单验证规则 - 使用computed动态生成
+const formRules = computed(() => ({
   locationId: [
     { required: true, message: '请选择所属民宿', trigger: 'change' }
   ],
@@ -316,7 +419,11 @@ const formRules = {
     { required: true, message: '请输入面积', trigger: 'blur' }
   ],
   bedType: [
-    { required: true, message: '请选择床型', trigger: 'change' }
+    { 
+      required: !isMultiBedroomType.value, // 只有单卧室房型才需要验证bedType
+      message: '请选择床型', 
+      trigger: 'change' 
+    }
   ],
   maxGuests: [
     { required: true, message: '请输入最大入住人数', trigger: 'blur' }
@@ -330,7 +437,7 @@ const formRules = {
   status: [
     { required: true, message: '请选择房间状态', trigger: 'change' }
   ]
-}
+}))
 
 // 方法
 const loadRoomTypes = async () => {
@@ -360,6 +467,49 @@ const handleRoomTypeChange = (roomTypeId) => {
   if (selectedType) {
     formData.basePrice = selectedType.basePrice
     formData.currentPrice = selectedType.basePrice
+    
+    // 根据房型初始化卧室配置
+    const typeName = selectedType.typeName || ''
+    if (typeName.includes('两房') || typeName.includes('2房')) {
+      bedrooms.value = [
+        { name: '主卧', bedType: '大床', bedCount: 1 },
+        { name: '次卧', bedType: '双床', bedCount: 2 }
+      ]
+    } else if (typeName.includes('三房') || typeName.includes('3房')) {
+      bedrooms.value = [
+        { name: '主卧', bedType: '大床', bedCount: 1 },
+        { name: '次卧1', bedType: '双床', bedCount: 2 },
+        { name: '次卧2', bedType: '单人床', bedCount: 1 }
+      ]
+    } else if (typeName.includes('四房') || typeName.includes('4房')) {
+      bedrooms.value = [
+        { name: '主卧', bedType: '大床', bedCount: 1 },
+        { name: '次卧1', bedType: '双床', bedCount: 2 },
+        { name: '次卧2', bedType: '单人床', bedCount: 1 },
+        { name: '次卧3', bedType: '单人床', bedCount: 1 }
+      ]
+    } else {
+      // 单房或其他房型
+      bedrooms.value = [
+        { name: '卧室', bedType: '大床', bedCount: 1 }
+      ]
+    }
+  }
+}
+
+// 添加卧室
+const addBedroom = () => {
+  bedrooms.value.push({
+    name: `次卧${bedrooms.value.length}`,
+    bedType: '双床',
+    bedCount: 2
+  })
+}
+
+// 移除卧室
+const removeBedroom = (index) => {
+  if (bedrooms.value.length > 1) {
+    bedrooms.value.splice(index, 1)
   }
 }
 
@@ -455,7 +605,31 @@ const beforeImageUpload = (file) => {
 
 const handleSubmit = async () => {
   try {
+    // 先验证表单
     await formRef.value.validate()
+    
+    // 如果是多卧室房型，验证卧室配置
+    if (isMultiBedroomType.value) {
+      if (bedrooms.value.length === 0) {
+        ElMessage.error('请至少配置一个卧室')
+        return
+      }
+      
+      // 检查每个卧室是否都填写完整
+      for (let i = 0; i < bedrooms.value.length; i++) {
+        const bedroom = bedrooms.value[i]
+        if (!bedroom.name || !bedroom.bedType || !bedroom.bedCount) {
+          ElMessage.error(`请完整填写第${i + 1}个卧室的配置信息`)
+          return
+        }
+      }
+    } else {
+      // 单卧室房型，验证bedType
+      if (!formData.bedType) {
+        ElMessage.error('请选择床型')
+        return
+      }
+    }
     
     submitting.value = true
     
@@ -463,6 +637,18 @@ const handleSubmit = async () => {
       ...formData,
       facilities: JSON.stringify(formData.facilities),
       images: JSON.stringify(formData.images)
+    }
+    
+    // 如果是多卧室房型，将卧室配置转换为JSON
+    if (isMultiBedroomType.value) {
+      submitData.bedroomConfig = JSON.stringify({
+        bedrooms: bedrooms.value
+      })
+      // 清空单一床型字段
+      submitData.bedType = null
+    } else {
+      // 单卧室房型，保持bedType，清空bedroomConfig
+      submitData.bedroomConfig = null
     }
     
     if (isEdit.value) {
@@ -530,6 +716,18 @@ const loadRoomData = async (id) => {
         }))
       } catch (e) {
         roomData.images = []
+      }
+    }
+    
+    // 解析卧室配置
+    if (roomData.bedroomConfig) {
+      try {
+        const config = JSON.parse(roomData.bedroomConfig)
+        if (config.bedrooms && Array.isArray(config.bedrooms)) {
+          bedrooms.value = config.bedrooms
+        }
+      } catch (e) {
+        console.error('解析卧室配置失败:', e)
       }
     }
     

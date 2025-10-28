@@ -65,10 +65,19 @@ request.interceptors.response.use(
     // 成功响应
     if (code === 200) {
       return { data, message }
+    } else if (code === 401) {
+      // 后端返回401，token失效
+      console.warn('⚠️ Token已失效，需要重新登录')
+      handleUnauthorized(response.config)
+      const err = new Error('认证失败')
+      err._notified = true
+      return Promise.reject(err)
     } else {
       // 业务错误
       ElMessage.error(message || '请求失败')
-      return Promise.reject(new Error(message || '请求失败'))
+      const err = new Error(message || '请求失败')
+      err._notified = true
+      return Promise.reject(err)
     }
   },
   (error) => {
@@ -101,6 +110,9 @@ request.interceptors.response.use(
       ElMessage.error('网络连接异常，请检查网络设置')
     }
     
+    if (error && typeof error === 'object') {
+      error._notified = true
+    }
     return Promise.reject(error)
   }
 )

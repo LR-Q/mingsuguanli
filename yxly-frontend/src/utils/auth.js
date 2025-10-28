@@ -1,7 +1,8 @@
 import Cookies from 'js-cookie'
 
-const TOKEN_KEY = 'yxly_token'
-const REFRESH_TOKEN_KEY = 'yxly_refresh_token'
+// 前台站点：使用独立的Cookie/LocalStorage键，避免与管理后台冲突
+const TOKEN_KEY = 'yxly_user_token'
+const REFRESH_TOKEN_KEY = 'yxly_user_refresh_token'
 const USER_INFO_KEY = 'yxly_user_info'
 
 // 访问令牌相关

@@ -44,15 +44,8 @@ public class UserController {
         
         SysUser user = securityUtils.getCurrentUser();
         if (user == null) {
-            // 临时使用默认用户信息（调试用）
-            Map<String, Object> defaultUserInfo = new HashMap<>();
-            defaultUserInfo.put("id", 1L);
-            defaultUserInfo.put("username", "admin");
-            defaultUserInfo.put("realName", "Administrator");
-            defaultUserInfo.put("email", "admin@example.com");
-            defaultUserInfo.put("balance", new BigDecimal("1288.50"));
-            log.warn("用户未登录，使用默认用户信息");
-            return Result.success(defaultUserInfo, "获取用户信息成功");
+            log.error("用户未登录，无法获取用户信息");
+            return Result.error("请先登录后再查询用户信息");
         }
         
         Map<String, Object> userInfo = new HashMap<>();
@@ -76,9 +69,8 @@ public class UserController {
         
         SysUser user = securityUtils.getCurrentUser();
         if (user == null) {
-            // 临时使用默认余额（调试用）
-            log.warn("用户未登录，使用默认余额");
-            return Result.success(new BigDecimal("1288.50"), "获取余额成功");
+            log.error("用户未登录，无法获取余额");
+            return Result.error("请先登录后再查询余额");
         }
         
         BigDecimal balance = user.getBalance() != null ? user.getBalance() : new BigDecimal("0.00");

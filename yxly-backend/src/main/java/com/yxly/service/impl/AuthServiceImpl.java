@@ -126,9 +126,9 @@ public class AuthServiceImpl implements AuthService {
                 }
             }
             
-            // 5. 生成Token
-            String accessToken = jwtTokenProvider.generateToken(user.getUsername());
-            String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
+            // 5. 生成Token（包含userId）
+            String accessToken = jwtTokenProvider.generateAccessToken(user.getUsername(), user.getId());
+            String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername(), user.getId());
             Long expiresIn = jwtTokenProvider.getExpirationTime();
             
             // 6. 查询用户角色信息
@@ -202,9 +202,9 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ResultCode.USER_NOT_FOUND, "用户不存在或已被禁用");
         }
         
-        // 生成新的访问令牌
-        String newAccessToken = jwtTokenProvider.generateToken(username);
-        String newRefreshToken = jwtTokenProvider.generateRefreshToken(username);
+        // 生成新的访问令牌（包含userId）
+        String newAccessToken = jwtTokenProvider.generateAccessToken(username, user.getId());
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(username, user.getId());
         
         LoginResponse.UserInfo userInfo = LoginResponse.UserInfo.builder()
             .id(user.getId())

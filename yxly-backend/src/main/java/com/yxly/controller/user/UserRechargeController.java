@@ -42,15 +42,21 @@ public class UserRechargeController {
     @Operation(summary = "申请充值")
     public Result<Void> applyRecharge(@Valid @RequestBody RechargeApplyRequest request) {
         
+        log.info("=== 收到充值申请请求 ===");
+        
         // 获取当前用户ID
         Long userId = securityUtils.getCurrentUserId();
+        log.info("从SecurityUtils获取的userId: {}", userId);
+        
         if (userId == null) {
-            // 临时使用默认用户ID（调试用）
-            userId = 1L;
-            log.warn("用户未登录，使用默认用户ID: {}", userId);
+            log.error("用户未登录，无法申请充值");
+            return Result.error("请先登录后再申请充值");
         }
         
+        log.info("调用充值服务: userId={}, amount={}", userId, request.getAmount());
         rechargeService.applyRecharge(userId, request);
+        
+        log.info("=== 充值申请请求处理完成 ===");
         return Result.success(null, "充值申请提交成功，请等待管理员审核");
     }
     
@@ -66,9 +72,8 @@ public class UserRechargeController {
         // 获取当前用户ID
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) {
-            // 临时使用默认用户ID（调试用）
-            userId = 1L;
-            log.warn("用户未登录，使用默认用户ID: {}", userId);
+            log.error("用户未登录，无法查询充值记录");
+            return Result.error("请先登录后再查询充值记录");
         }
         
         IPage<RechargeRecordResponse> page = rechargeService.getUserRechargeRecordPage(current, size, userId);
@@ -95,9 +100,8 @@ public class UserRechargeController {
             // 获取当前用户ID
             Long userId = securityUtils.getCurrentUserId();
             if (userId == null) {
-                // 临时使用默认用户ID（调试用）
-                userId = 1L;
-                log.warn("用户未登录，使用默认用户ID: {}", userId);
+                log.error("用户未登录，无法获取余额");
+                return Result.error("请先登录后再查询余额");
             }
             
             // 直接从数据库查询用户信息
@@ -131,9 +135,8 @@ public class UserRechargeController {
             // 获取当前用户ID
             Long userId = securityUtils.getCurrentUserId();
             if (userId == null) {
-                // 临时使用默认用户ID（调试用）
-                userId = 1L;
-                log.warn("用户未登录，使用默认用户ID: {}", userId);
+                log.error("用户未登录，无法申请提现");
+                return Result.error("请先登录后再申请提现");
             }
             
             // 检查用户余额是否足够
@@ -171,9 +174,8 @@ public class UserRechargeController {
             // 获取当前用户ID
             Long userId = securityUtils.getCurrentUserId();
             if (userId == null) {
-                // 临时使用默认用户ID（调试用）
-                userId = 1L;
-                log.warn("用户未登录，使用默认用户ID: {}", userId);
+                log.error("用户未登录，无法查询提现记录");
+                return Result.error("请先登录后再查询提现记录");
             }
             
             IPage<com.yxly.dto.response.WithdrawRecordResponse> page = withdrawService.getUserWithdrawRecordPage(current, size, userId);

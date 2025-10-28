@@ -99,11 +99,10 @@ public class SecurityConfig {
                 .antMatchers("/v1/admin/withdraw/**").permitAll()  // 临时允许管理员提现管理接口访问
                 .antMatchers("/v1/admin/bookings/**").permitAll()  // 临时允许管理员订单管理接口访问
                 .antMatchers("/admin/bookings/**").permitAll()  // 临时允许管理员订单管理接口访问（新路径）
-                .antMatchers("/v1/user/recharge/**").permitAll()  // 临时允许用户充值接口访问（调试用）
-                .antMatchers("/v1/user/info").permitAll()  // 临时允许用户信息接口访问（调试用）
-                .antMatchers("/v1/user/balance").permitAll()  // 临时允许用户余额接口访问（调试用）
-                .antMatchers("/user/bookings/**").permitAll()  // 临时允许用户订单接口访问（调试用）
-                .antMatchers("/v1/user/financial-records/**").permitAll()  // 临时允许用户财务记录接口访问（调试用）
+                .antMatchers("/v1/admin/statistics/**").permitAll()  // 临时允许统计数据接口访问
+                // 用户端接口 - 需要认证
+                .antMatchers("/v1/user/**").authenticated()  // 用户端接口需要登录认证
+                .antMatchers("/user/**").authenticated()  // 用户端接口需要登录认证
                 // 需要认证的接口
                 .anyRequest().authenticated()
             .and()

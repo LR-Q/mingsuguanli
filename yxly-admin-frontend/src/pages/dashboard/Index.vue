@@ -46,6 +46,26 @@
           <div class="stat-label">今日收入</div>
         </div>
       </div>
+
+      <div class="stat-card">
+        <div class="stat-icon success">
+          <el-icon><Money /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">¥{{ stats.totalRevenue }}</div>
+          <div class="stat-label">总收入</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon info">
+          <el-icon><Money /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">¥{{ stats.accountBalance }}</div>
+          <div class="stat-label">账户余额</div>
+        </div>
+      </div>
     </div>
     
     <!-- 图表区域 -->
@@ -55,10 +75,7 @@
           <h3>入住率趋势</h3>
         </div>
         <div class="chart-content">
-          <!-- 这里可以集成图表库如ECharts -->
-          <div class="placeholder-chart">
-            <p>入住率图表</p>
-          </div>
+          <div ref="occupancyChartRef" class="chart-box"></div>
         </div>
       </div>
       
@@ -67,67 +84,123 @@
           <h3>收入统计</h3>
         </div>
         <div class="chart-content">
-          <div class="placeholder-chart">
-            <p>收入统计图表</p>
-          </div>
+          <div ref="revenueChartRef" class="chart-box"></div>
         </div>
       </div>
     </div>
     
-    <!-- 快捷操作 -->
-    <div class="quick-actions">
-      <h3>快捷操作</h3>
-      <div class="actions-grid">
-        <el-button type="primary" @click="$router.push('/bookings/create')">
-          <el-icon><Plus /></el-icon>
-          新建订单
-        </el-button>
-        <el-button type="success" @click="$router.push('/rooms/create')">
-          <el-icon><Plus /></el-icon>
-          添加房间
-        </el-button>
-        <el-button type="warning" @click="$router.push('/customers')">
-          <el-icon><Search /></el-icon>
-          查找客户
-        </el-button>
-        <el-button type="info" @click="$router.push('/bookings')">
-          <el-icon><Document /></el-icon>
-          订单管理
-        </el-button>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, ref } from 'vue'
+import { getDashboardStatistics, getOccupancyTrend, getRevenueTrend } from '@/api/modules/statistics'
+import { ElMessage } from 'element-plus'
+import * as echarts from 'echarts'
 
 // 统计数据
 const stats = reactive({
   totalRooms: 0,
   todayBookings: 0,
   totalCustomers: 0,
-  todayRevenue: 0
+  todayRevenue: 0,
+  totalRevenue: 0,
+  accountBalance: 0
 })
 
 // 获取统计数据
 const getStats = async () => {
   try {
-    // 这里调用API获取统计数据
-    // const response = await getStatistics()
-    
-    // 模拟数据
-    stats.totalRooms = 50
-    stats.todayBookings = 12
-    stats.totalCustomers = 368
-    stats.todayRevenue = 8680
+    const response = await getDashboardStatistics()
+    // 响应拦截器已经处理了成功响应，直接使用data
+    const data = response.data
+    if (data) {
+      stats.totalRooms = data.totalRooms || 0
+      stats.todayBookings = data.todayBookings || 0
+      stats.totalCustomers = data.totalCustomers || 0
+      stats.todayRevenue = data.todayRevenue || 0
+      stats.totalRevenue = data.totalRevenue || 0
+      stats.accountBalance = data.accountBalance || 0
+    }
   } catch (error) {
     console.error('获取统计数据失败:', error)
+    ElMessage.error('获取统计数据失败: ' + (error.message || '未知错误'))
+  }
+}
+
+// 入住率图表
+const occupancyChartRef = ref(null)
+let occupancyChartInstance = null
+const revenueChartRef = ref(null)
+let revenueChartInstance = null
+
+const renderOccupancyChart = (dates, rates) => {
+  if (!occupancyChartInstance) {
+    occupancyChartInstance = echarts.init(occupancyChartRef.value)
+    window.addEventListener('resize', () => occupancyChartInstance && occupancyChartInstance.resize())
+  }
+  occupancyChartInstance.setOption({
+    tooltip: { trigger: 'axis', valueFormatter: (v) => `${v}%` },
+    grid: { left: 40, right: 20, top: 30, bottom: 30 },
+    xAxis: { type: 'category', data: dates },
+    yAxis: { type: 'value', axisLabel: { formatter: '{value}%' }, max: 100 },
+    series: [
+      {
+        name: '入住率',
+        type: 'line',
+        data: rates,
+        smooth: true,
+        areaStyle: { opacity: 0.2 },
+        showSymbol: false,
+        lineStyle: { width: 2, color: '#409eff' }
+      }
+    ]
+  })
+}
+
+const loadOccupancyTrend = async () => {
+  try {
+    const { data } = await getOccupancyTrend(7)
+    renderOccupancyChart(data?.dates || [], (data?.occupancyRates || []).map(v => Number(v)))
+  } catch (e) {
+    console.error('获取入住率趋势失败:', e)
+  }
+}
+
+const renderRevenueChart = (dates, revenues) => {
+  if (!revenueChartInstance) {
+    revenueChartInstance = echarts.init(revenueChartRef.value)
+    window.addEventListener('resize', () => revenueChartInstance && revenueChartInstance.resize())
+  }
+  revenueChartInstance.setOption({
+    tooltip: { trigger: 'axis', valueFormatter: (v) => `¥${v}` },
+    grid: { left: 40, right: 20, top: 30, bottom: 30 },
+    xAxis: { type: 'category', data: dates },
+    yAxis: { type: 'value', axisLabel: { formatter: '¥{value}' } },
+    series: [
+      {
+        name: '收入',
+        type: 'bar',
+        data: revenues,
+        itemStyle: { color: '#67C23A' }
+      }
+    ]
+  })
+}
+
+const loadRevenueTrend = async () => {
+  try {
+    const { data } = await getRevenueTrend(7)
+    renderRevenueChart(data?.dates || [], (data?.revenues || []).map(v => Number(v)))
+  } catch (e) {
+    console.error('获取收入趋势失败:', e)
   }
 }
 
 onMounted(() => {
   getStats()
+  loadOccupancyTrend()
+  loadRevenueTrend()
 })
 </script>
 
@@ -230,45 +303,10 @@ onMounted(() => {
       .chart-content {
         padding: 24px;
         
-        .placeholder-chart {
-          height: 300px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #f5f7fa;
-          border-radius: 4px;
-          color: #909399;
-        }
+        .chart-box { height: 300px; }
       }
     }
   }
   
-  .quick-actions {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    padding: 24px;
-    
-    h3 {
-      margin: 0 0 16px 0;
-      color: #303133;
-      font-size: 18px;
-      font-weight: 500;
-    }
-    
-    .actions-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 16px;
-      
-      .el-button {
-        height: 48px;
-        
-        .el-icon {
-          margin-right: 8px;
-        }
-      }
-    }
-  }
 }
 </style>

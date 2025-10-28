@@ -31,9 +31,11 @@ public class RoomUpdateRequest {
     @DecimalMax(value = "200.0", message = "面积不能超过200平方米")
     private BigDecimal area;
 
-    @Schema(description = "床型", example = "double")
-    @NotBlank(message = "床型不能为空")
+    @Schema(description = "床型（单卧室房型使用）", example = "double")
     private String bedType;
+
+    @Schema(description = "卧室配置（多卧室房型使用，JSON格式）", example = "{\"bedrooms\":[{\"name\":\"主卧\",\"bedType\":\"大床\",\"bedCount\":1}]}")
+    private String bedroomConfig;
 
     @Schema(description = "最大入住人数", example = "2")
     @NotNull(message = "最大入住人数不能为空")
@@ -71,6 +73,10 @@ public class RoomUpdateRequest {
     @Size(max = 50, message = "WiFi密码长度不能超过50个字符")
     private String wifiPassword;
 }
+
+
+
+
 
 
 

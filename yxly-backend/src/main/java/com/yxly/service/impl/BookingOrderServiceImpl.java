@@ -19,6 +19,7 @@ import com.yxly.mapper.RoomInfoMapper;
 import com.yxly.mapper.RoomTypeMapper;
 import com.yxly.mapper.SysUserMapper;
 import com.yxly.service.BookingOrderService;
+import com.yxly.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -46,6 +47,7 @@ public class BookingOrderServiceImpl implements BookingOrderService {
     private final RoomTypeMapper roomTypeMapper;
     private final SysUserMapper sysUserMapper;
     private final FinancialRecordMapper financialRecordMapper;
+    private final SecurityUtils securityUtils;
     
     // 状态映射
     private static final Map<Integer, String> BOOKING_STATUS_MAP = new HashMap<>();
@@ -529,10 +531,10 @@ public class BookingOrderServiceImpl implements BookingOrderService {
             throw new BusinessException(ResultCode.OPERATION_FAILED, "订单确认失败");
         }
         
-        // 创建消费交易记录
+        // 创建消费交易记录 & 入账到管理员余额（结算逻辑）
         try {
-            SysUser user = sysUserMapper.selectById(order.getCustomerId());
-            if (user != null) {
+            SysUser customer = sysUserMapper.selectById(order.getCustomerId());
+            if (customer != null) {
                 FinancialRecord consumptionRecord = new FinancialRecord();
                 consumptionRecord.setRecordNo(order.getOrderNo()); // 使用订单号作为交易单号
                 consumptionRecord.setType(2); // 2:支出
@@ -542,12 +544,58 @@ public class BookingOrderServiceImpl implements BookingOrderService {
                 consumptionRecord.setDescription("订房消费 - 订单号:" + order.getOrderNo() + " | 房间:" + 
                                            (order.getRoomId() != null ? order.getRoomId() : "未知"));
                 consumptionRecord.setPaymentMethod("余额支付");
-                consumptionRecord.setOperatorId(user.getId());
+                consumptionRecord.setOperatorId(customer.getId());
                 consumptionRecord.setRecordDate(LocalDate.now());
                 consumptionRecord.setStatus(1); // 1:有效
                 
                 financialRecordMapper.insert(consumptionRecord);
                 log.info("订单确认成功，已创建消费交易记录: orderId={}, amount={}", id, order.getTotalAmount());
+            }
+            
+            // 若订单已支付，则将订单金额记入管理员余额
+            if (order.getPaymentStatus() != null && order.getPaymentStatus() == 1) {
+                // 这里将款项结算到管理员（房东）账号
+                // 优先使用订单 operatorId；若为空，则回退为当前确认人并回写订单
+                Long adminUserId = order.getOperatorId();
+                if (adminUserId == null) {
+                    adminUserId = securityUtils.getCurrentUserId();
+                    if (adminUserId != null) {
+                        order.setOperatorId(adminUserId);
+                        bookingOrderMapper.updateById(order);
+                        log.info("订单缺少operatorId，已回填为当前确认人: orderId={}, adminUserId={}", order.getId(), adminUserId);
+                    }
+                }
+                if (adminUserId != null) {
+                    SysUser adminUser = sysUserMapper.selectById(adminUserId);
+                    if (adminUser != null) {
+                        BigDecimal current = adminUser.getBalance() != null ? adminUser.getBalance() : BigDecimal.ZERO;
+                        BigDecimal settleAmount = order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO;
+                        adminUser.setBalance(current.add(settleAmount));
+                        sysUserMapper.updateById(adminUser);
+
+                        // 记一条收入记录（房东收款）
+                        FinancialRecord incomeRecord = new FinancialRecord();
+                        incomeRecord.setRecordNo(order.getOrderNo() + "-S");
+                        incomeRecord.setType(1); // 1:收入
+                        incomeRecord.setCategory("ROOM");
+                        incomeRecord.setAmount(settleAmount);
+                        incomeRecord.setRelatedOrderId(order.getId());
+                        incomeRecord.setDescription("订单结算入账 - 订单号:" + order.getOrderNo());
+                        incomeRecord.setPaymentMethod("系统结算");
+                        incomeRecord.setOperatorId(adminUserId);
+                        incomeRecord.setRecordDate(LocalDate.now());
+                        incomeRecord.setStatus(1);
+                        financialRecordMapper.insert(incomeRecord);
+
+                        log.info("订单确认后结算成功: adminUserId={}, +{} => {}", adminUserId, settleAmount, adminUser.getBalance());
+                    } else {
+                        log.warn("未找到管理员用户，无法入账: operatorId={}", adminUserId);
+                    }
+                } else {
+                    log.warn("订单缺少operatorId（房东/管理员），无法入账: orderId={}", order.getId());
+                }
+            } else {
+                log.info("订单未支付，不执行结算入账: orderId={}", order.getId());
             }
         } catch (Exception e) {
             log.error("创建消费交易记录失败，但订单确认成功: orderId={}, error={}", id, e.getMessage(), e);
@@ -574,6 +622,8 @@ public class BookingOrderServiceImpl implements BookingOrderService {
         
         // 更新订单状态为已入住
         order.setBookingStatus(BookingStatus.CHECKED_IN.getCode());
+        // 写入实际入住时间
+        order.setCheckInTime(java.time.LocalDateTime.now());
         
         int result = bookingOrderMapper.updateById(order);
         if (result <= 0) {
@@ -600,6 +650,8 @@ public class BookingOrderServiceImpl implements BookingOrderService {
         
         // 更新订单状态为已退房（已完成）
         order.setBookingStatus(BookingStatus.CHECKED_OUT.getCode());
+        // 写入实际退房时间
+        order.setCheckOutTime(java.time.LocalDateTime.now());
         
         int result = bookingOrderMapper.updateById(order);
         if (result <= 0) {

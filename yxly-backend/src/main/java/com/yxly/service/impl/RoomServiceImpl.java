@@ -111,7 +111,10 @@ public class RoomServiceImpl implements RoomService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateRoom(RoomUpdateRequest request) {
-        log.info("更新房间: id={}", request.getId());
+        log.info("=== 开始更新房间 ===");
+        log.info("房间ID: {}", request.getId());
+        log.info("床型: {}", request.getBedType());
+        log.info("卧室配置: {}", request.getBedroomConfig());
         
         // 检查房间是否存在
         RoomInfo existingRoom = roomInfoMapper.selectById(request.getId());
@@ -130,12 +133,15 @@ public class RoomServiceImpl implements RoomService {
         BeanUtils.copyProperties(request, roomInfo);
         roomInfo.setUpdateTime(LocalDateTime.now());
         
+        log.info("准备保存到数据库 - bedType: {}, bedroomConfig: {}", 
+                roomInfo.getBedType(), roomInfo.getBedroomConfig());
+        
         int result = roomInfoMapper.updateById(roomInfo);
         if (result <= 0) {
             throw new BusinessException(ResultCode.INTERNAL_ERROR, "更新房间失败");
         }
         
-        log.info("房间更新成功: id={}", request.getId());
+        log.info("=== 房间更新成功: id={} ===", request.getId());
     }
 
     @Override

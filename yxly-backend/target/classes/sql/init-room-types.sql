@@ -67,3 +67,7 @@ INSERT INTO room_info (room_number, room_type_id, floor_number, area, bed_type, 
 
 
 
+
+
+
+

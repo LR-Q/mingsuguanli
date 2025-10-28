@@ -66,9 +66,11 @@ request.interceptors.response.use(
     if (code === 200) {
       return { data, message }
     } else {
-      // 业务错误
+      // 业务错误（全局提示一次，并在错误对象上打标，避免页面再次重复提示）
       ElMessage.error(message || '请求失败')
-      return Promise.reject(new Error(message || '请求失败'))
+      const err = new Error(message || '请求失败')
+      err._notified = true
+      return Promise.reject(err)
     }
   },
   (error) => {
@@ -100,7 +102,10 @@ request.interceptors.response.use(
     } else {
       ElMessage.error('网络连接异常，请检查网络设置')
     }
-    
+    // 打标避免重复提示
+    if (error && typeof error === 'object') {
+      error._notified = true
+    }
     return Promise.reject(error)
   }
 )
