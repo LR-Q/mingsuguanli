@@ -1474,3 +1474,48 @@
 2025-10-29 00:20:04.848 [http-nio-8080-exec-5] DEBUG [o.s.s.web.context.SecurityContextPersistenceFilter] - Cleared SecurityContextHolder to complete request
 2025-10-29 00:20:05.010 [http-nio-8080-exec-4] DEBUG [org.springframework.security.web.FilterChainProxy] - Securing GET /v1/admin/statistics/occupancy-trend?days=7
 2025-10-29 00:20:05.011 [http-nio-8080-exec-4] DEBUG [o.s.s.web.context.SecurityContextPersistenceFilter] - Set SecurityContextHolder to empty SecurityContext
+2025-10-29 00:20:05.012 [http-nio-8080-exec-4] DEBUG [com.yxly.security.UserDetailsServiceImpl] - 加载用户信息: XHH
+2025-10-29 00:20:05.016 [http-nio-8080-exec-4] DEBUG [o.s.s.w.access.intercept.FilterSecurityInterceptor] - Authorized filter invocation [GET /v1/admin/statistics/occupancy-trend?days=7] with attributes [permitAll]
+2025-10-29 00:20:05.016 [http-nio-8080-exec-4] DEBUG [org.springframework.security.web.FilterChainProxy] - Secured GET /v1/admin/statistics/occupancy-trend?days=7
+2025-10-29 00:20:05.017 [http-nio-8080-exec-4] INFO  [com.yxly.controller.admin.StatisticsController] - 获取入住率趋势: days=7
+2025-10-29 00:20:05.027 [http-nio-8080-exec-6] DEBUG [org.springframework.security.web.FilterChainProxy] - Securing GET /v1/admin/statistics/revenue-trend?days=7
+2025-10-29 00:20:05.027 [http-nio-8080-exec-6] DEBUG [o.s.s.web.context.SecurityContextPersistenceFilter] - Set SecurityContextHolder to empty SecurityContext
+2025-10-29 00:20:05.029 [http-nio-8080-exec-6] DEBUG [com.yxly.security.UserDetailsServiceImpl] - 加载用户信息: XHH
+2025-10-29 00:20:05.034 [http-nio-8080-exec-6] DEBUG [o.s.s.w.access.intercept.FilterSecurityInterceptor] - Authorized filter invocation [GET /v1/admin/statistics/revenue-trend?days=7] with attributes [permitAll]
+2025-10-29 00:20:05.034 [http-nio-8080-exec-6] DEBUG [org.springframework.security.web.FilterChainProxy] - Secured GET /v1/admin/statistics/revenue-trend?days=7
+2025-10-29 00:20:05.035 [http-nio-8080-exec-6] INFO  [com.yxly.controller.admin.StatisticsController] - 获取收入趋势: days=7
+2025-10-29 00:20:05.037 [http-nio-8080-exec-4] DEBUG [o.s.s.web.context.SecurityContextPersistenceFilter] - Cleared SecurityContextHolder to complete request
+2025-10-29 00:20:05.054 [http-nio-8080-exec-6] DEBUG [o.s.s.web.context.SecurityContextPersistenceFilter] - Cleared SecurityContextHolder to complete request
+2025-10-29 21:41:14.926 [restartedMain] INFO  [com.yxly.YxlyApplication] - Starting YxlyApplication using Java 17.0.12 on LuoRui with PID 4692 (E:\CursorProject\LRminsu\yxly-backend\target\classes started by 罗瑞 in E:\CursorProject\LRminsu\yxly-backend)
+2025-10-29 21:41:14.928 [restartedMain] DEBUG [com.yxly.YxlyApplication] - Running with Spring Boot v2.7.18, Spring v5.3.31
+2025-10-29 21:41:14.929 [restartedMain] INFO  [com.yxly.YxlyApplication] - The following 1 profile is active: "dev"
+2025-10-29 21:41:14.993 [restartedMain] INFO  [o.s.b.d.env.DevToolsPropertyDefaultsPostProcessor] - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2025-10-29 21:41:14.994 [restartedMain] INFO  [o.s.b.d.env.DevToolsPropertyDefaultsPostProcessor] - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2025-10-29 21:41:16.187 [restartedMain] INFO  [o.s.d.r.config.RepositoryConfigurationDelegate] - Multiple Spring Data modules found, entering strict repository configuration mode
+2025-10-29 21:41:16.189 [restartedMain] INFO  [o.s.d.r.config.RepositoryConfigurationDelegate] - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2025-10-29 21:41:16.219 [restartedMain] INFO  [o.s.d.r.config.RepositoryConfigurationDelegate] - Finished Spring Data repository scanning in 16 ms. Found 0 Redis repository interfaces.
+2025-10-29 21:41:17.051 [restartedMain] INFO  [o.s.boot.web.embedded.tomcat.TomcatWebServer] - Tomcat initialized with port(s): 8080 (http)
+2025-10-29 21:41:17.061 [restartedMain] INFO  [org.apache.catalina.core.StandardService] - Starting service [Tomcat]
+2025-10-29 21:41:17.061 [restartedMain] INFO  [org.apache.catalina.core.StandardEngine] - Starting Servlet engine: [Apache Tomcat/9.0.83]
+2025-10-29 21:41:17.137 [restartedMain] INFO  [o.a.c.c.ContainerBase.[Tomcat].[localhost].[/api]] - Initializing Spring embedded WebApplicationContext
+2025-10-29 21:41:17.137 [restartedMain] INFO  [o.s.b.w.s.c.ServletWebServerApplicationContext] - Root WebApplicationContext: initialization completed in 2143 ms
+2025-10-29 21:41:17.220 [restartedMain] INFO  [c.a.d.s.b.a.DruidDataSourceAutoConfigure] - Init DruidDataSource
+2025-10-29 21:41:17.674 [restartedMain] INFO  [com.alibaba.druid.pool.DruidDataSource] - {dataSource-1} inited
+2025-10-29 21:41:17.973 [restartedMain] DEBUG [com.yxly.security.JwtAuthenticationFilter] - Filter 'jwtAuthenticationFilter' configured for use
+2025-10-29 21:41:18.444 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v1/auth/**']
+2025-10-29 21:41:18.446 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v1/merchant/register']
+2025-10-29 21:41:18.446 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v1/dev/**']
+2025-10-29 21:41:18.446 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v3/api-docs/**']
+2025-10-29 21:41:18.446 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/swagger-ui/**']
+2025-10-29 21:41:18.446 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/swagger-ui.html']
+2025-10-29 21:41:18.446 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/druid/**']
+2025-10-29 21:41:18.446 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/actuator/**']
+2025-10-29 21:41:18.447 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/error']
+2025-10-29 21:41:18.447 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v1/rooms/**', GET]
+2025-10-29 21:41:18.447 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v1/admin/rooms/types', GET]
+2025-10-29 21:41:18.447 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v1/admin/files/**']
+2025-10-29 21:41:18.447 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v1/upload/**']
+2025-10-29 21:41:18.447 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v1/super-admin/**']
+2025-10-29 21:41:18.447 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v1/admin/recharge/**']
+2025-10-29 21:41:18.448 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v1/admin/withdraw/**']
+2025-10-29 21:41:18.448 [restartedMain] DEBUG [o.s.s.w.a.e.ExpressionBasedFilterInvocationSecurityMetadataSource] - Adding web access control expression [permitAll] for Ant [pattern='/v1/admin/bookings/**']
