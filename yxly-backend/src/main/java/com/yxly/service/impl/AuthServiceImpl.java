@@ -229,23 +229,24 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void resetPassword(ResetPasswordRequest request) {
-        log.info("重置密码请求: phone={}, email={}", request.getPhone(), request.getEmail());
+        log.info("重置密码请求: username={}, phone={}, email={}", request.getUsername(), request.getPhone(), request.getEmail());
         
         // 验证密码一致性
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "两次输入的密码不一致");
         }
         
-        // 通过手机号和邮箱双重验证查找用户
+        // 通过 用户名 + 手机号 + 邮箱 三要素验证查找用户
         SysUser user = userMapper.selectOne(
             new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getUsername, request.getUsername())
                 .eq(SysUser::getPhone, request.getPhone())
                 .eq(SysUser::getEmail, request.getEmail())
                 .eq(SysUser::getDeleted, 0)
         );
         
         if (user == null) {
-            throw new BusinessException(ResultCode.USER_NOT_FOUND, "手机号或邮箱不匹配，请检查输入信息");
+            throw new BusinessException(ResultCode.USER_NOT_FOUND, "用户名、手机号或邮箱不匹配，请检查输入信息");
         }
         
         // 检查用户状态

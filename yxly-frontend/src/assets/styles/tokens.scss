@@ -1,0 +1,99 @@
+/* Design Tokens: 色彩/排版/动效/阴影/半径/间距 */
+
+/* 基础色板 */
+:root {
+  /* Brand / Primary（支持渐变与纯色） */
+  --color-primary-600: #2563eb;
+  --color-primary-400: #60a5fa;
+  --color-primary-solid: #3b82f6; /* 用于需要纯色的场景 */
+  --color-primary-gradient: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+
+  /* 中性色（文本/背景/边框） */
+  --color-neutral-900: #0f172a; /* 深文本/深背景 */
+  --color-neutral-800: #1f2937; /* 深背景层 */
+  --color-neutral-600: #475569; /* 次级文本 */
+  --color-neutral-500: #64748b; /* 辅助文本 */
+  --color-neutral-100: #f1f5f9; /* 浅背景层 */
+  --color-neutral-50: #f8fafc;  /* 页面底色 */
+
+  /* 强调色（状态） */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger:  #ef4444;
+  --color-info:    #60a5fa;
+
+  /* 语义表面与文本 */
+  --surface-1: #ffffff;
+  --surface-2: #f8fafc;
+  --text-1: #0f172a;
+  --text-2: #475569;
+
+  /* 玻璃拟态 */
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-blur: 12px;
+  --glass-border: 1px solid rgba(255, 255, 255, 0.45);
+
+  /* 阴影（柔和层级） */
+  --shadow-sm: 0 2px 6px 0 rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 24px 0 rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 16px 48px 0 rgba(0, 0, 0, 0.16);
+
+  /* 间距系统（8px栅格） */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* 圆角 */
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-full: 999px;
+
+  /* 排版（Noto Sans SC + Inter） */
+  --font-sans-cn: "Noto Sans SC", "Inter", system-ui, -apple-system, "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-size-body: 14px;
+  --font-size-title: 16px;
+  --line-height-base: 1.6;
+
+  /* 动效 */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-150: 150ms;
+  --duration-200: 200ms;
+
+  /* 其他 */
+  --border-color: rgba(15, 23, 42, 0.08);
+  --container-max: 1200px;
+
+  /* Element Plus 对齐 */
+  --brand-primary: var(--color-primary-solid);
+}
+
+/* 暗色模式变量 */
+[data-theme="dark"] {
+  --surface-1: #0b1220;
+  --surface-2: #0f172a;
+  --text-1: #e5e7eb;
+  --text-2: #a3aab7;
+
+  --glass-bg: rgba(17, 24, 39, 0.5);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+
+  --border-color: rgba(255, 255, 255, 0.06);
+  --color-neutral-50: #0b1220;
+
+  /* 暗色微调阴影（更收敛） */
+  --shadow-sm: 0 2px 6px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px 0 rgba(0, 0, 0, 0.48);
+  --shadow-lg: 0 16px 48px 0 rgba(0, 0, 0, 0.56);
+}
+
+

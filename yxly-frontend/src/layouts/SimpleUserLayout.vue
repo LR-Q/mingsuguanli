@@ -3,7 +3,7 @@
     <!-- 简单的顶部导航 -->
     <header style="background: #409eff; color: white; padding: 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
       <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;">
-        <h1 style="margin: 0; font-size: 24px;">悦鑫乐怡民宿</h1>
+        <h1 style="margin: 0; font-size: 24px;" class="brand-title">悦鑫乐怡民宿</h1>
         <nav style="display: flex; gap: 30px; align-items: center;">
           <router-link to="/home" style="color: white; text-decoration: none; font-weight: 500;">首页</router-link>
           <router-link to="/rooms" style="color: white; text-decoration: none; font-weight: 500;">房间预订</router-link>
@@ -86,7 +86,7 @@
 
     <!-- 简单的底部 -->
     <footer style="background: #2c3e50; color: white; padding: 20px 0; text-align: center;">
-      <p style="margin: 0;">&copy; 2024 悦鑫乐怡民宿管理系统. All rights reserved.</p>
+      <p style="margin: 0;">&copy; 2025 悦鑫乐怡民宿管理系统. 由LuoRui开发.</p>
     </footer>
   </div>
 </template>

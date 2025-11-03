@@ -1,0 +1,29 @@
+@use "./tokens" as *;
+
+/* 推荐：切换 <html data-theme="dark"> 或 <body data-theme="dark"> */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* 背景与文本由 tokens 接管 */
+  body {
+    background: var(--surface-1);
+    color: var(--text-1);
+  }
+
+  /* 玻璃卡片暗色优化 */
+  .glass-card {
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* 英雄区底层渐变偏深 */
+  .hero {
+    background-image:
+      radial-gradient(80% 80% at 20% 10%, rgba(96,165,250,0.14) 0%, rgba(96,165,250,0) 60%),
+      radial-gradient(70% 60% at 80% 0%, rgba(37,99,235,0.18) 0%, rgba(37,99,235,0) 60%),
+      linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+  }
+}
+
+

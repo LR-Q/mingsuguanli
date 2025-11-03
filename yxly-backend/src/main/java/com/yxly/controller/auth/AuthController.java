@@ -57,10 +57,10 @@ public class AuthController {
         return Result.success(response, "Token刷新成功");
     }
     
-    @Operation(summary = "重置密码", description = "通过手机号和邮箱双重验证重置密码")
+    @Operation(summary = "重置密码", description = "通过用户名+手机号+邮箱三要素验证重置密码")
     @PostMapping("/reset-password")
     public Result<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        log.info("重置密码请求: phone={}, email={}", request.getPhone(), request.getEmail());
+        log.info("重置密码请求: username={}, phone={}, email={}", request.getUsername(), request.getPhone(), request.getEmail());
         authService.resetPassword(request);
         return Result.success(null, "密码重置成功");
     }

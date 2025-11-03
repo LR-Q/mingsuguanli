@@ -81,8 +81,8 @@
                     <el-icon><Expand /></el-icon>
                     <span>{{ roomInfo.area }}㎡</span>
                   </div>
-                  <div class="spec-item" v-if="roomInfo.bedType">
-                    <span>{{ roomInfo.bedType }}</span>
+                  <div class="spec-item" v-if="roomInfo.bedSummary || roomInfo.bedType">
+                    <span>{{ roomInfo.bedSummary || roomInfo.bedType }}</span>
                   </div>
                 </div>
               </div>
@@ -155,26 +155,42 @@
                 </el-form>
               </div>
 
-              <!-- 房间设施 -->
+              <!-- 房间设施（统一标签展示：仅显示已勾选的所有设施） -->
               <div class="room-facilities-section" v-if="roomInfo.features && roomInfo.features.length > 0">
                 <h4>房间设施</h4>
-                <div class="facilities-grid">
-                  <div class="facility-category" v-for="category in facilitiesCategories" :key="category.name">
-                    <h5 class="category-title">{{ category.name }}</h5>
-                    <div class="facility-items">
-                      <div 
-                        v-for="facility in category.items" 
-                        :key="facility.name"
-                        class="facility-item"
-                        :class="{ 'available': facility.available, 'unavailable': !facility.available }"
-                      >
-                        <el-icon class="facility-icon">
-                          <Check v-if="facility.available" />
-                          <Close v-else />
-                        </el-icon>
-                        <span class="facility-name">{{ facility.name }}</span>
+                <div class="facilities-tags">
+                  <el-tag 
+                    v-for="feature in roomInfo.features" 
+                    :key="feature"
+                    type="info"
+                    size="large"
+                    class="facility-tag"
+                  >
+                    {{ feature }}
+                  </el-tag>
+                </div>
+              </div>
+
+              <!-- 用户评论 -->
+              <div class="room-reviews-section">
+                <h4>用户评论</h4>
+                <div v-if="reviewList.length === 0 && !reviewLoading" class="no-reviews">
+                  <el-empty description="还没有评论，快来抢沙发吧" />
+                </div>
+                <div v-else>
+                  <div class="review-item" v-for="item in reviewList" :key="item.id">
+                    <div class="review-header">
+                      <el-avatar :size="40">{{ (item.userDisplayName || '匿').slice(0,1) }}</el-avatar>
+                      <div class="review-meta">
+                        <div class="name">{{ item.userDisplayName || '匿名用户' }}</div>
+                        <el-rate v-model="item.rating" disabled :max="5" />
+                        <div class="time">{{ new Date(item.createTime).toLocaleString('zh-CN') }}</div>
                       </div>
                     </div>
+                    <div class="review-content">{{ item.content }}</div>
+                  </div>
+                  <div class="reviews-actions" v-if="reviewList.length < reviewPage.total">
+                    <el-button :loading="reviewLoading" @click="() => { reviewPage.current++; loadRoomReviews(false) }">加载更多</el-button>
                   </div>
                 </div>
               </div>
@@ -227,8 +243,9 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Picture, User, Expand, ArrowLeft, Check, Close } from '@element-plus/icons-vue'
+import { Picture, User, Expand, ArrowLeft } from '@element-plus/icons-vue'
 import { getUserRoomById } from '@/api/modules/userRoom'
+import { getRoomReviews } from '@/api/modules/review'
 import { createBooking } from '@/api/modules/booking'
 
 const router = useRouter()
@@ -248,7 +265,8 @@ const roomInfo = ref({
   price: 0,
   maxGuests: 1,
   area: 0,
-  features: []
+  features: [],
+  bedSummary: ''
 })
 
 // 预订表单
@@ -300,34 +318,32 @@ const totalAmount = computed(() => {
   return subtotal.value
 })
 
-// 设施分类
-const facilitiesCategories = computed(() => {
-  const allFacilities = {
-    '基础': [
-      '无线网络', '电梯', '落地窗', '卧室-冷暖空调', '客厅-冷暖空调', '暖气',
-      '晾衣架', '电热水壶', '沙发', '电视', '冰箱', '洗衣机',
-      '空气净化器', '加湿器', '净水机'
-    ],
-    '卫浴': [
-      '热水', '独立卫浴', '电吹风', '洗浴用品', '牙具', '浴巾',
-      '毛巾', '浴缸', '智能马桶', '干湿分离'
-    ],
-    '厨房': [
-      '微波炉', '餐具', '刀具菜板', '烹饪锅具', '电磁炉', '燃气灶',
-      '洗涤用品', '电饭煲', '饮水机', '餐桌'
-    ]
+// 评论数据
+const reviewLoading = ref(false)
+const reviewPage = ref({ current: 1, size: 5, total: 0 })
+const reviewList = ref([])
+
+const loadRoomReviews = async (reset = false) => {
+  if (!roomInfo.value.id) return
+  try {
+    reviewLoading.value = true
+    if (reset) reviewPage.value.current = 1
+    const { data } = await getRoomReviews(roomInfo.value.id, {
+      current: reviewPage.value.current,
+      size: reviewPage.value.size
+    })
+    reviewPage.value.total = data.total
+    if (reset) {
+      reviewList.value = data.records || []
+    } else {
+      reviewList.value = reviewList.value.concat(data.records || [])
+    }
+  } finally {
+    reviewLoading.value = false
   }
-  
-  const userFacilities = roomInfo.value.features || []
-  
-  return Object.entries(allFacilities).map(([categoryName, facilities]) => ({
-    name: categoryName,
-    items: facilities.map(facility => ({
-      name: facility,
-      available: userFacilities.includes(facility)
-    }))
-  }))
-})
+}
+
+// 不再做分类，直接使用 roomInfo.features 进行展示
 
 // 日期禁用逻辑
 const disabledDate = (time) => {
@@ -466,6 +482,19 @@ onMounted(async () => {
       }
     }
     
+    // 处理卧室配置
+    let bedSummary = ''
+    if (roomData.bedroomConfig && typeof roomData.bedroomConfig === 'string') {
+      try {
+        const cfg = JSON.parse(roomData.bedroomConfig)
+        if (cfg && Array.isArray(cfg.bedrooms)) {
+          bedSummary = cfg.bedrooms.map(b => `${b.name || ''} ${b.bedType || ''}×${b.bedCount || 1}`.trim()).join(' · ')
+        }
+      } catch (e) {
+        bedSummary = ''
+      }
+    }
+
     // 更新房间信息
     roomInfo.value = {
       id: roomData.id,
@@ -478,8 +507,12 @@ onMounted(async () => {
       imageList: imageList,
       currentImage: currentImage,
       currentImageIndex: 0,
-      bedType: roomData.bedType
+      bedType: roomData.bedType,
+      bedSummary
     }
+    
+    // 加载房间评论
+    await loadRoomReviews(true)
     
   } catch (error) {
     console.error('获取房间详情失败:', error)
@@ -715,77 +748,41 @@ onMounted(async () => {
       font-weight: 600;
     }
     
-    .facilities-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
+    .facilities-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
     }
-    
-    .facility-category {
-      .category-title {
-        margin: 0 0 16px 0;
-        font-size: 16px;
-        color: #333;
-        font-weight: 600;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #f0f0f0;
-      }
-      
-      .facility-items {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 12px;
-      }
-      
-      .facility-item {
+    .facility-tag { margin: 4px 8px 4px 0; }
+  }
+
+  .room-reviews-section {
+    margin-top: 24px;
+    h4 {
+      margin: 0 0 16px 0;
+      font-size: 18px;
+      color: #333;
+      font-weight: 600;
+    }
+    .review-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+      .review-header {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 8px;
-        transition: all 0.2s ease;
-        
-        &.available {
-          background: #f0f9ff;
-          border: 1px solid #e0f2fe;
-          
-          .facility-icon {
-            color: #10b981;
-          }
-          
-          .facility-name {
-            color: #333;
-          }
-          
-          &:hover {
-            background: #e0f2fe;
-          }
-        }
-        
-        &.unavailable {
-          background: #fafafa;
-          border: 1px solid #f0f0f0;
-          
-          .facility-icon {
-            color: #d1d5db;
-          }
-          
-          .facility-name {
-            color: #9ca3af;
-          }
-        }
-        
-        .facility-icon {
-          font-size: 16px;
-          flex-shrink: 0;
-        }
-        
-        .facility-name {
-          font-size: 14px;
-          line-height: 1.4;
+        gap: 12px;
+        .review-meta {
+          .name { font-weight: 600; color: #333; }
+          .time { color: #9ca3af; font-size: 12px; }
         }
       }
+      .review-content {
+        margin-top: 8px;
+        color: #555;
+        line-height: 1.6;
+      }
     }
+    .reviews-actions { text-align: center; padding-top: 12px; }
   }
 }
 

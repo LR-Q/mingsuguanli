@@ -311,6 +311,7 @@ import {
   Picture 
 } from '@element-plus/icons-vue'
 import { getMyBookingList, cancelBooking } from '@/api/modules/booking'
+import { submitReview as submitReviewApi } from '@/api/modules/review'
 
 // 响应式数据
 const activeStatus = ref('all')
@@ -455,8 +456,13 @@ const submitReview = async () => {
       return
     }
 
-    // 这里调用提交评价API
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await submitReviewApi({
+      roomId: selectedOrder.value?.roomId,
+      orderId: selectedOrder.value?.id,
+      rating: reviewForm.rating,
+      content: reviewForm.content,
+      anonymous: reviewForm.anonymous
+    })
 
     ElMessage.success('评价提交成功')
     showReview.value = false
@@ -486,6 +492,7 @@ const loadOrders = async () => {
     if (response.data && response.data.records) {
       orders.value = response.data.records.map(order => ({
         id: order.id,
+        roomId: order.roomId,
         orderNumber: order.orderNo,
         roomName: order.roomName || '房间',
         roomType: order.roomType || '',

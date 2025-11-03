@@ -16,6 +16,13 @@
         <!-- 身份验证区域 -->
         <div class="form-section">
           <h3 class="section-title">身份验证</h3>
+          <el-form-item prop="username">
+            <el-input
+              v-model="forgotForm.username"
+              placeholder="请输入注册用户名"
+              prefix-icon="User"
+            />
+          </el-form-item>
           <el-form-item prop="phone">
             <el-input
               v-model="forgotForm.phone"
@@ -97,11 +104,23 @@ const loading = ref(false)
 
 // 忘记密码表单
 const forgotForm = reactive({
+  username: '',
   phone: '',
   email: '',
   newPassword: '',
   confirmPassword: ''
 })
+const validateUsername = (rule, value, callback) => {
+  const usernameRegex = /^[A-Za-z0-9_.-]{3,20}$/
+  if (!value) {
+    callback(new Error('请输入用户名'))
+  } else if (!usernameRegex.test(value)) {
+    callback(new Error('用户名为3-20位，支持字母、数字、._-'))
+  } else {
+    callback()
+  }
+}
+
 
 // 自定义验证规则
 const validatePhone = (rule, value, callback) => {
@@ -151,6 +170,7 @@ const validateConfirmPassword = (rule, value, callback) => {
 
 // 表单验证规则
 const forgotRules = {
+  username: [{ validator: validateUsername, trigger: 'blur' }],
   phone: [{ validator: validatePhone, trigger: 'blur' }],
   email: [{ validator: validateEmail, trigger: 'blur' }],
   newPassword: [{ validator: validatePassword, trigger: 'blur' }],
@@ -167,6 +187,7 @@ const handleResetPassword = async () => {
     loading.value = true
     
     const response = await resetPassword({
+      username: forgotForm.username,
       phone: forgotForm.phone,
       email: forgotForm.email,
       newPassword: forgotForm.newPassword,

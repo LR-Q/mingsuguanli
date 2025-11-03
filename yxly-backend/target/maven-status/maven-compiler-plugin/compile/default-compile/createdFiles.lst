@@ -12,6 +12,7 @@ com\yxly\security\JwtTokenProvider.class
 com\yxly\service\AuthService.class
 com\yxly\dto\request\RoomCreateRequest.class
 com\yxly\dto\request\RoomUpdateRequest.class
+com\yxly\entity\RoomReview.class
 com\yxly\exception\GlobalExceptionHandler.class
 com\yxly\dto\response\MerchantAuditVO.class
 com\yxly\dto\response\RevenueTrendResponse$RevenueTrendResponseBuilder.class
@@ -42,18 +43,22 @@ com\yxly\service\BookingOrderService.class
 com\yxly\mapper\FinancialRecordMapper.class
 com\yxly\service\impl\MinioServiceImpl.class
 com\yxly\mapper\RechargeRecordMapper.class
+com\yxly\service\impl\RoomReviewServiceImpl.class
 com\yxly\dto\response\LoginResponse.class
 com\yxly\config\MyBatisPlusConfig$1.class
 com\yxly\entity\CustomerInfo.class
 com\yxly\common\Result.class
 com\yxly\controller\admin\MerchantAuditController.class
 com\yxly\service\impl\StatisticsServiceImpl.class
+com\yxly\dto\response\RoomReviewResponse.class
 com\yxly\dto\response\LoginResponse$UserInfo$UserInfoBuilder.class
 com\yxly\service\MinioService.class
 com\yxly\controller\admin\WithdrawController.class
 com\yxly\YxlyApplication.class
+com\yxly\dto\request\ReviewCreateRequest.class
 com\yxly\dto\response\OccupancyTrendResponse.class
 com\yxly\service\impl\RoomServiceImpl.class
+com\yxly\service\RoomReviewService.class
 com\yxly\entity\RoomType.class
 com\yxly\dto\response\RoomResponse.class
 com\yxly\mapper\UserFavoriteMapper.class
@@ -93,6 +98,7 @@ com\yxly\dto\request\ChangePasswordRequest.class
 com\yxly\controller\user\FinancialRecordController.class
 com\yxly\controller\user\UserBookingController.class
 com\yxly\service\impl\FinancialRecordServiceImpl.class
+com\yxly\controller\user\UserReviewController.class
 com\yxly\entity\SysUser.class
 com\yxly\service\impl\RechargeServiceImpl.class
 com\yxly\security\UserPrincipal.class
@@ -127,6 +133,7 @@ com\yxly\dto\request\RechargeApplyRequest.class
 com\yxly\controller\user\UserRechargeController.class
 com\yxly\entity\RechargeRecord.class
 com\yxly\controller\dev\DevController.class
+com\yxly\mapper\RoomReviewMapper.class
 com\yxly\dto\request\FavoriteRequest.class
 com\yxly\entity\RoomInfo.class
 com\yxly\dto\request\ResetPasswordRequest.class

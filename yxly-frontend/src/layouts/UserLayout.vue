@@ -4,7 +4,7 @@
     <header class="header">
       <div class="header-container">
         <div class="logo">
-          <h1>悦鑫乐怡民宿</h1>
+          <h1 class="brand-title">悦鑫乐怡民宿</h1>
         </div>
         
         <nav class="nav-menu">
@@ -91,7 +91,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2024 悦鑫乐怡民宿管理系统. All rights reserved.</p>
+          <p>&copy; 2025 悦鑫乐怡民宿管理系统. 由LuoRui开发.</p>
         </div>
       </div>
     </footer>

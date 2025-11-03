@@ -164,7 +164,40 @@ public class UserController {
             }
             
             log.info("更新用户信息: userId={}, data={}", user.getId(), profileData);
+
+            boolean usernameChanged = false;
             
+            // 可选：更新用户名（需唯一性校验）
+            if (profileData.containsKey("username")) {
+                String newUsername = (String) profileData.get("username");
+                if (newUsername != null) {
+                    newUsername = newUsername.trim();
+                }
+                if (newUsername == null || newUsername.isEmpty()) {
+                    return Result.error(400, "用户名不能为空");
+                }
+                if (newUsername.length() < 3 || newUsername.length() > 20) {
+                    return Result.error(400, "用户名长度需在3-20个字符");
+                }
+                if (!newUsername.matches("^[A-Za-z0-9_.-]+$")) {
+                    return Result.error(400, "用户名仅支持字母、数字、._-");
+                }
+                // 仅当新旧不同才更新
+                if (!newUsername.equals(user.getUsername())) {
+                    Long cnt = sysUserMapper.selectCount(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser>()
+                            .eq(SysUser::getUsername, newUsername)
+                            .eq(SysUser::getDeleted, 0)
+                            .ne(SysUser::getId, user.getId())
+                    );
+                    if (cnt != null && cnt > 0) {
+                        return Result.error(400, "用户名已被占用");
+                    }
+                    user.setUsername(newUsername);
+                    usernameChanged = true;
+                }
+            }
+
             // 更新允许修改的字段
             if (profileData.containsKey("realName")) {
                 user.setRealName((String) profileData.get("realName"));
@@ -191,6 +224,11 @@ public class UserController {
             userInfo.put("phone", user.getPhone());
             userInfo.put("avatar", user.getAvatar());
             userInfo.put("balance", user.getBalance() != null ? user.getBalance() : new BigDecimal("0.00"));
+            
+            // 提示前端：若用户名已变更，需要重新登录以刷新JWT中的主体
+            if (usernameChanged) {
+                userInfo.put("usernameChanged", true);
+            }
             
             log.info("用户信息更新成功: userId={}", user.getId());
             return Result.success(userInfo, "用户信息更新成功");

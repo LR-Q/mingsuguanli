@@ -748,6 +748,15 @@ onMounted(() => {
   loadRoomTypes()
   if (isEdit.value) {
     loadRoomData(route.params.id)
+  } else if (route.query.copyFrom) {
+    // 复制模式：加载源房间并预填
+    const sourceId = route.query.copyFrom
+    loadRoomData(sourceId).then(() => {
+      // 清理需要用户重新填写/修改的字段
+      formData.roomNumber = ''
+      formData.status = 1
+      // 允许调整位置与价格，保持其它信息
+    })
   }
 })
 </script>

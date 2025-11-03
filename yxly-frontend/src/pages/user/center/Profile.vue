@@ -21,7 +21,7 @@
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="用户名" prop="username">
-              <el-input v-model="profileForm.username" disabled />
+              <el-input v-model="profileForm.username" placeholder="请输入用户名(3-20位，字母数字._-)" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -219,8 +219,12 @@ const passwordForm = reactive({
 
 // 表单验证规则
 const profileRules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' },
+    { pattern: /^[A-Za-z0-9_.-]+$/, message: '仅支持字母、数字、._-', trigger: 'blur' }
+  ],
   realName: [
-    { required: true, message: '请输入真实姓名', trigger: 'blur' },
     { min: 2, max: 20, message: '姓名长度在 2 到 20 个字符', trigger: 'blur' }
   ],
   email: [
@@ -292,6 +296,7 @@ const handleSave = async () => {
     
     // 调用API保存用户信息
     const updateData = {
+      username: profileForm.username,
       realName: profileForm.realName,
       email: profileForm.email,
       phone: profileForm.phone,
@@ -308,6 +313,10 @@ const handleSave = async () => {
       authStore.updateUserInfo(response.data)
       // 备份新数据
       Object.assign(originalData, profileForm)
+      if (response.data.usernameChanged) {
+        ElMessage.warning('用户名已修改，为保证安全将退出重新登录')
+        setTimeout(() => authStore.logout(), 1200)
+      }
     }
     
   } catch (error) {

@@ -17,6 +17,11 @@ import javax.validation.constraints.Size;
 @Schema(description = "重置密码请求")
 public class ResetPasswordRequest {
     
+    @Schema(description = "用户名", example = "jack")
+    @NotBlank(message = "用户名不能为空")
+    @Pattern(regexp = "^[A-Za-z0-9_.-]{3,20}$", message = "用户名为3-20位字母、数字、._-")
+    private String username;
+    
     @Schema(description = "手机号", example = "13800138000")
     @NotBlank(message = "手机号不能为空")
     @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式不正确")

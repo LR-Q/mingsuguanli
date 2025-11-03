@@ -61,6 +61,23 @@ html, body {
   background-color: $bg-color-page;
 }
 
+// 品牌手写体（优先使用本地/自带手写字体，回退到Google Fonts: Ma Shan Zheng）
+@import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
+
+@font-face {
+  font-family: 'BrandBrush';
+  src: url('/assets/fonts/brand-brush.woff2') format('woff2'); // 可选：放置你自己的手写体文件
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.brand-title {
+  font-family: 'BrandBrush', 'Ma Shan Zheng', 'STXingkai', 'KaiTi', 'FZShuTi', 'HanziPen SC', 'LXGW WenKai', cursive, 'Microsoft YaHei', '微软雅黑';
+  letter-spacing: 2px;
+  font-weight: 400;
+}
+
 // 滚动条样式
 ::-webkit-scrollbar {
   width: 6px;

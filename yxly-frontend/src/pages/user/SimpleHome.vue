@@ -1,7 +1,7 @@
 <template>
   <div class="home-container">
     <div class="header">
-      <h1 class="title">悦鑫乐怡民宿</h1>
+      <h1 class="title brand-title">悦鑫乐怡民宿</h1>
       <p class="subtitle">欢迎来到我们的民宿预订系统</p>
     </div>
     
@@ -859,7 +859,7 @@ onMounted(async () => {
     
     .title {
       color: #409eff;
-      font-size: 32px;
+      font-size: 36px;
       margin: 0 0 10px 0;
     }
     

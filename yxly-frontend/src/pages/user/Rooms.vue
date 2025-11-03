@@ -1,91 +1,101 @@
 <template>
   <div class="user-rooms">
     <div class="container">
-      <div class="page-header">
-        <h1>房间预订</h1>
-        <p>选择您心仪的房间，享受舒适的住宿体验</p>
-      </div>
+      <!-- 顶部大标题移除，仅保留下方蓝色搜索框 -->
 
-      <!-- 搜索筛选 -->
+      <!-- 搜索筛选（美化版） -->
       <div class="search-section">
-        <el-card>
-          <el-form :model="searchForm" inline>
-            <el-form-item label="民宿位置">
-              <el-select 
-                v-model="searchForm.locationId" 
-                placeholder="全部民宿" 
-                clearable
-                style="width: 180px;"
-                @change="searchRooms"
-              >
-                <el-option
-                  v-for="location in locations"
-                  :key="location.id"
-                  :label="location.name"
-                  :value="location.id"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="入住日期">
-              <el-date-picker
-                v-model="searchForm.checkIn"
-                type="date"
-                placeholder="选择入住日期"
-                style="width: 160px;"
-                :disabled-date="disabledCheckInDate"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-              />
-            </el-form-item>
-            <el-form-item label="退房日期">
-              <el-date-picker
-                v-model="searchForm.checkOut"
-                type="date"
-                placeholder="选择退房日期"
-                style="width: 160px;"
-                :disabled-date="disabledCheckOutDate"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-              />
-            </el-form-item>
-            <el-form-item label="入住人数">
-              <el-select 
-                v-model="searchForm.guests" 
-                placeholder="选择人数（可选）" 
-                clearable
-                style="width: 160px;"
-              >
-                <el-option label="1人" :value="1" />
-                <el-option label="2人" :value="2" />
-                <el-option label="3人" :value="3" />
-                <el-option label="4人" :value="4" />
-                <el-option label="5人以上" :value="5" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="房型">
-              <el-select 
-                v-model="searchForm.roomTypeId" 
-                placeholder="选择房型" 
-                clearable
-                style="width: 180px;"
-              >
-                <el-option
-                  label="所有房型"
-                  :value="null"
-                />
-                <el-option
-                  v-for="type in roomTypes"
-                  :key="type.id"
-                  :label="type.typeName"
-                  :value="type.id"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="searchRooms">搜索</el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
+        <div class="hero">
+          <div class="hero-inner">
+            <div class="hero-title">
+              <div class="title-left">
+                <h2>房间预订</h2>
+                <p>选择您的目的地与日期，开始一次舒适的入住</p>
+              </div>
+              <div class="title-action">
+                <el-button class="hero-search-btn" type="primary" @click="searchRooms">
+                  <el-icon style="margin-right:8px"><Search /></el-icon>
+                  搜索
+                </el-button>
+              </div>
+            </div>
+            <div class="search-bar">
+              <!-- 目的地/民宿 -->
+              <div class="field">
+                <div class="label">民宿位置</div>
+                <el-select 
+                  v-model="searchForm.locationId" 
+                  placeholder="全部民宿" 
+                  clearable
+                  filterable
+                  class="w-240"
+                >
+                  <el-option
+                    v-for="location in locations"
+                    :key="location.id"
+                    :label="location.name"
+                    :value="location.id"
+                  />
+                </el-select>
+              </div>
+
+              <!-- 入住/退房（日期范围选择） -->
+              <div class="field">
+                <div class="label">入住/退房</div>
+                <div class="control-row">
+                  <el-date-picker
+                    v-model="dateRange"
+                    type="daterange"
+                    range-separator="-"
+                    start-placeholder="选择入住日期"
+                    end-placeholder="选择退房日期"
+                    value-format="YYYY-MM-DD"
+                    :disabled-date="disableDateRange"
+                    class="w-full"
+                  />
+                  <span class="nights-inline" v-if="nights > 0">{{ nights }} 晚</span>
+                </div>
+              </div>
+
+              <!-- 入住人数 -->
+              <div class="field">
+                <div class="label">入住人数</div>
+                <el-select 
+                  v-model="searchForm.guests" 
+                  placeholder="选择人数（可选）" 
+                  clearable
+                  class="w-160"
+                >
+                  <el-option label="1人" :value="1" />
+                  <el-option label="2人" :value="2" />
+                  <el-option label="3人" :value="3" />
+                  <el-option label="4人" :value="4" />
+                  <el-option label="5人以上" :value="5" />
+                </el-select>
+              </div>
+
+              <!-- 房型 -->
+              <div class="field">
+                <div class="label">房型</div>
+                <el-select 
+                  v-model="searchForm.roomTypeId" 
+                  placeholder="选择房型" 
+                  clearable
+                  class="w-200"
+                >
+                  <el-option label="所有房型" :value="null" />
+                  <el-option
+                    v-for="type in roomTypes"
+                    :key="type.id"
+                    :label="type.typeName"
+                    :value="type.id"
+                  />
+                </el-select>
+              </div>
+
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- 房间列表 -->
@@ -101,11 +111,11 @@
         </div>
         
         <div v-else class="rooms-grid">
-          <div v-for="room in rooms" :key="room.id" class="room-card">
+          <div v-for="group in groupedRooms" :key="group.key" class="room-card">
             <div class="room-image" @mouseenter="room.showControls = true" @mouseleave="room.showControls = false">
               <el-image
-                v-if="room.currentImage"
-                :src="room.currentImage"
+                v-if="group.coverImage"
+                :src="group.coverImage"
                 fit="cover"
                 class="room-img"
               >
@@ -121,82 +131,46 @@
                 <p>房间图片</p>
               </div>
               
-              <!-- 图片轮播控制 -->
-              <div v-if="room.imageList && room.imageList.length > 1" class="image-controls">
-                <!-- 左右切换按钮 -->
-                <div 
-                  v-show="room.showControls" 
-                  class="image-nav prev-btn" 
-                  @click.stop="prevImage(room)"
-                >
-                  <el-icon><ArrowLeft /></el-icon>
-                </div>
-                <div 
-                  v-show="room.showControls" 
-                  class="image-nav next-btn" 
-                  @click.stop="nextImage(room)"
-                >
-                  <el-icon><ArrowRight /></el-icon>
-                </div>
-                
-                <!-- 图片指示器 -->
-                <div class="image-indicators">
-                  <span 
-                    v-for="(img, index) in room.imageList" 
-                    :key="index"
-                    class="indicator"
-                    :class="{ active: index === room.currentImageIndex }"
-                    @click.stop="setCurrentImage(room, index)"
-                  ></span>
-                </div>
-              </div>
+              
             </div>
             <div class="room-content">
               <div class="room-info">
-                <h3>{{ room.name }}</h3>
-                <p class="room-location" v-if="room.locationName">
+                <h3>{{ group.roomTypeName }}</h3>
+                <p class="room-location" v-if="group.locationName">
                   <el-icon><Location /></el-icon>
-                  {{ room.locationName }}
+                  {{ group.locationName }}
                 </p>
-                <p class="room-desc">{{ room.description || '舒适温馨的房间，为您提供优质的住宿体验' }}</p>
-                <div class="room-features" v-if="room.facilities && room.facilities.length > 0">
+                <p class="room-desc">{{ group.description || '舒适温馨的房间，为您提供优质的住宿体验' }}</p>
+                <div class="room-features" v-if="group.facilities && group.facilities.length > 0">
                   <div class="feature-list">
                     <span 
-                      v-for="feature in room.facilities.slice(0, 6)" 
+                      v-for="feature in group.facilities.slice(0, 6)" 
                       :key="feature" 
                       class="feature-item"
                     >
                       <el-icon class="feature-icon"><Check /></el-icon>
                       {{ feature }}
                     </span>
-                    <span v-if="room.facilities.length > 6" class="more-features">
-                      +{{ room.facilities.length - 6 }}项设施
+                    <span v-if="group.facilities.length > 6" class="more-features">
+                      +{{ group.facilities.length - 6 }}项设施
                     </span>
                   </div>
                 </div>
                 <div class="room-details">
-                  <span><el-icon><User /></el-icon> 最多{{ room.maxGuests }}人</span>
-                  <span><el-icon><Expand /></el-icon> {{ room.area }}㎡</span>
-                  <span>{{ room.bedType || '标准床型' }}</span>
+                  <span><el-icon><User /></el-icon> 最多{{ group.maxGuests }}人</span>
+                  <span><el-icon><Expand /></el-icon> {{ group.area }}㎡</span>
+                  <span>{{ group.bedType || '标准床型' }}</span>
+                  <span class="group-count">剩余{{ group.rooms.length }}间</span>
                 </div>
               </div>
               <div class="room-actions">
                 <div class="price-info">
-                  <span class="price">￥{{ room.price }}</span>
+                  <span class="price">￥{{ group.minPrice }}</span>
                   <span class="unit">/晚</span>
                 </div>
                 <div class="action-buttons">
-                  <el-button 
-                    :type="room.isFavorite ? 'danger' : 'default'"
-                    :icon="room.isFavorite ? StarFilled : Star"
-                    size="large"
-                    @click="toggleFavorite(room)"
-                    :loading="room.favoriteLoading"
-                    circle
-                  />
-                  <el-button type="primary" size="large" @click="bookRoom(room)">
-                    立即预订
-                  </el-button>
+                  <el-button type="primary" size="large" @click="bookGroup(group)">立即预订</el-button>
+                  <el-button size="large" @click="openSelectRooms(group)">选择具体房间</el-button>
                 </div>
               </div>
             </div>
@@ -208,15 +182,31 @@
           <el-button @click="loadMore" :loading="loading">加载更多</el-button>
         </div>
       </div>
+      <!-- 选择具体房间弹窗 -->
+      <el-dialog v-model="roomSelectVisible" title="选择具体房间" width="600px">
+        <div v-if="selectableRooms.length === 0">暂无可选房间</div>
+        <div v-else class="select-rooms">
+          <div class="select-room-item" v-for="r in selectableRooms" :key="r.id">
+            <div class="left">
+              <div class="title">房间 {{ r.roomNumber }}</div>
+              <div class="meta">最多{{ r.maxGuests }}人 · {{ r.area }}㎡ · {{ r.bedType || '床型' }}</div>
+            </div>
+            <div class="right">
+              <span class="price">￥{{ r.price }}</span>
+              <el-button type="primary" size="small" @click="bookSpecificRoom(r)" style="margin-left:8px;">预订</el-button>
+            </div>
+          </div>
+        </div>
+      </el-dialog>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Picture, User, Expand, Check, ArrowLeft, ArrowRight, Star, StarFilled, Location } from '@element-plus/icons-vue'
+import { Picture, User, Expand, Check, ArrowLeft, ArrowRight, Star, StarFilled, Location, Search } from '@element-plus/icons-vue'
 import { getAvailableRooms, getUserRoomTypes, searchRooms as searchRoomsAPI, getUserLocations } from '@/api/modules/userRoom'
 import { addFavorite, removeFavorite, checkMultipleFavorites } from '@/api/modules/favorite'
 
@@ -227,6 +217,40 @@ const route = useRoute()
 const loading = ref(false)
 const hasMore = ref(true)
 const rooms = ref([])
+// 分组后的数据
+const groupedRooms = computed(() => {
+  const map = new Map()
+  rooms.value.forEach(r => {
+    const key = `${r.locationId || ''}-${r.roomTypeId || ''}`
+    if (!map.has(key)) {
+      map.set(key, {
+        key,
+        locationId: r.locationId,
+        locationName: r.locationName,
+        roomTypeId: r.roomTypeId,
+        roomTypeName: r.roomTypeName || r.name || '房型',
+        description: r.description,
+        facilities: Array.isArray(r.facilities) ? [...r.facilities] : [],
+        area: r.area,
+        bedType: r.bedType,
+        maxGuests: r.maxGuests,
+        minPrice: r.price,
+        coverImage: r.currentImage,
+        rooms: [r]
+      })
+    } else {
+      const g = map.get(key)
+      g.minPrice = Math.min(g.minPrice ?? r.price, r.price)
+      // 合并设施（去重）
+      const set = new Set([...(g.facilities || []), ...(Array.isArray(r.facilities) ? r.facilities : [])])
+      g.facilities = Array.from(set)
+      // 覆盖代表图（若无）
+      if (!g.coverImage && r.currentImage) g.coverImage = r.currentImage
+      g.rooms.push(r)
+    }
+  })
+  return Array.from(map.values())
+})
 const roomTypes = ref([])
 const locations = ref([])
 const total = ref(0)
@@ -240,6 +264,10 @@ const searchForm = reactive({
   guests: route.query.guests || null, // 默认不筛选入住人数
   roomTypeId: null
 })
+
+// 日期范围（美化用）
+const dateRange = ref(searchForm.checkIn && searchForm.checkOut ? [searchForm.checkIn, searchForm.checkOut] : null)
+const nights = ref(0)
 
 // 加载房间列表
 const loadRooms = async (isLoadMore = false) => {
@@ -367,6 +395,7 @@ const validateSearchForm = () => {
 // 搜索房间
 const searchRooms = async () => {
   // 验证搜索表单
+  syncDateFromRange()
   if (!validateSearchForm()) {
     return
   }
@@ -449,16 +478,26 @@ const searchRooms = async () => {
   }
 }
 
-// 预订房间
-const bookRoom = (room) => {
+// 预订分组（默认选最低价房间）
+const bookGroup = (group) => {
+  if (!group.rooms || group.rooms.length === 0) return
+  const target = [...group.rooms].sort((a,b) => (a.price||0)-(b.price||0))[0]
   router.push({
-    path: `/rooms/${room.id}/book`,
-    query: {
-      checkIn: searchForm.checkIn,
-      checkOut: searchForm.checkOut,
-      guests: searchForm.guests
-    }
+    path: `/rooms/${target.id}/book`,
+    query: { checkIn: searchForm.checkIn, checkOut: searchForm.checkOut, guests: searchForm.guests }
   })
+}
+
+// 选择具体房间弹窗
+const roomSelectVisible = ref(false)
+const selectableRooms = ref([])
+const openSelectRooms = (group) => {
+  selectableRooms.value = group.rooms || []
+  roomSelectVisible.value = true
+}
+const bookSpecificRoom = (room) => {
+  roomSelectVisible.value = false
+  bookGroup({ rooms: [room] })
 }
 
 // 图片轮播控制函数
@@ -500,6 +539,14 @@ const disabledCheckOutDate = (time) => {
   }
   // 退房日期必须晚于入住日期
   return time.getTime() <= new Date(searchForm.checkIn).getTime()
+}
+
+// 范围选择禁用
+const disableDateRange = (time) => {
+  // 不能选择今天之前
+  const min = new Date()
+  min.setHours(0,0,0,0)
+  return time.getTime() < min.getTime()
 }
 
 // 加载更多
@@ -573,6 +620,29 @@ onMounted(() => {
   loadRoomTypes()
   loadRooms()
 })
+
+// 同步和计算晚数
+const syncDateFromRange = () => {
+  if (dateRange.value && dateRange.value.length === 2) {
+    searchForm.checkIn = dateRange.value[0]
+    searchForm.checkOut = dateRange.value[1]
+  } else {
+    searchForm.checkIn = ''
+    searchForm.checkOut = ''
+  }
+}
+
+watch(dateRange, (val) => {
+  syncDateFromRange()
+  if (searchForm.checkIn && searchForm.checkOut) {
+    const checkInTime = new Date(searchForm.checkIn).getTime()
+    const checkOutTime = new Date(searchForm.checkOut).getTime()
+    const diff = (checkOutTime - checkInTime) / (1000 * 60 * 60 * 24)
+    nights.value = diff > 0 ? diff : 0
+  } else {
+    nights.value = 0
+  }
+})
 </script>
 
 <style lang="scss" scoped>
@@ -586,35 +656,95 @@ onMounted(() => {
     padding: 20px;
   }
   
-  .page-header {
-    text-align: center;
-    margin-bottom: 40px;
-    
-    h1 {
-      font-size: 32px;
-      color: #303133;
-      margin-bottom: 10px;
-    }
-    
-    p {
-      font-size: 16px;
-      color: #606266;
-    }
-  }
+  // 顶部大标题样式移除
   
   .search-section {
     margin-bottom: 30px;
     
-    .el-form {
+    .hero {
+      background: linear-gradient(135deg, #66b1ff, #409eff);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 6px 20px rgba(64, 158, 255, 0.25);
+      color: #fff;
+    }
+    
+    .hero-inner {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 20px 20px 10px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+    }
+    
+    .hero-title {
+      position: relative;
       display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
+      justify-content: center; // 居中标题
       align-items: center;
+      margin-bottom: 10px;
       
-      .el-form-item {
-        margin-bottom: 0;
+      .title-left {
+        width: 100%;
+        text-align: center;
+        h2 {
+          margin: 0 0 6px 0;
+          color: #303133;
+          font-size: 28px;
+          font-weight: 700;
+        }
+        p {
+          margin: 0;
+          color: #909399;
+        }
+      }
+      
+      .title-action {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+      }
+      
+      .hero-search-btn {
+        height: 48px;
+        padding: 0 22px;
+        border-radius: 8px;
+        font-size: 28px; // 与标题同等大小
+        line-height: 48px;
+        display: inline-flex;
+        align-items: center;
       }
     }
+    
+    .search-bar {
+      display: grid;
+      grid-template-columns: 220px minmax(420px, 1fr) 160px 180px;
+      gap: 14px;
+      align-items: center;
+    }
+    
+    .field {
+      position: relative;
+      
+      .label {
+        font-size: 12px;
+        color: #909399;
+        margin-bottom: 6px;
+      }
+      
+      .w-240 { width: 220px; }
+      .w-320 { width: 300px; }
+      .w-200 { width: 180px; }
+      .w-160 { width: 160px; }
+      .w-full { width: 100%; }
+      
+      .control-row { display: flex; align-items: center; gap: 8px; }
+      .nights-inline { color: #409eff; white-space: nowrap; }
+    }
+    
+    .actions { display: none; }
   }
   
   .rooms-section {
@@ -834,6 +964,7 @@ onMounted(() => {
               align-items: center;
               gap: 4px;
             }
+          .group-count { color: #409eff; }
           }
         }
         
@@ -869,6 +1000,16 @@ onMounted(() => {
     .load-more {
       text-align: center;
       padding: 20px;
+    }
+  }
+  
+  .select-rooms {
+    display: flex; flex-direction: column; gap: 12px;
+    .select-room-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 12px; border: 1px solid #f0f0f0; border-radius: 8px;
+      .left { .title { font-weight: 600; } .meta { color:#909399; font-size:12px; margin-top:4px; } }
+      .right { .price { color:#e6a23c; font-weight: 600; } }
     }
   }
   

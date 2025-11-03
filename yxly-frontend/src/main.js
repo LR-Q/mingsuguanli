@@ -8,6 +8,11 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import App from './App.vue'
 import router from './router'
 import './assets/styles/global.scss'
+import './assets/styles/base.scss'
+import './assets/styles/utilities.scss'
+import './assets/styles/theme-element.scss'
+import './assets/styles/dark.scss'
+import ripple from './directives/ripple'
 import { useAuthStore } from '@/stores/modules/auth'
 
 const app = createApp(App)
@@ -23,6 +28,9 @@ app.use(router)
 app.use(ElementPlus, {
   locale: zhCn
 })
+
+// 点击波纹指令
+app.directive('ripple', ripple)
 
 // 初始化认证状态
 const authStore = useAuthStore()
