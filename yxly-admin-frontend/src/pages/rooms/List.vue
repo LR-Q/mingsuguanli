@@ -114,14 +114,32 @@
         </el-table-column>
         <el-table-column prop="maxGuests" label="容纳人数" width="100" />
         <el-table-column prop="area" label="面积(㎡)" width="100" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" label="状态" width="160">
           <template #default="{ row }">
-            <el-tag :type="getStatusColor(row.status)">
-              {{ getStatusName(row.status) }}
-            </el-tag>
+            <el-select
+              v-model="row.status"
+              size="small"
+              class="status-select"
+              placeholder="请选择状态"
+              :disabled="statusLoading[row.id]"
+              :loading="statusLoading[row.id]"
+              @change="value => handleStatusChange(row, value)"
+            >
+              <el-option
+                v-for="option in statusOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              >
+                <div class="status-option">
+                  <el-tag :type="option.color" size="small" effect="plain">
+                    {{ option.label }}
+                  </el-tag>
+                </div>
+              </el-option>
+            </el-select>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" show-overflow-tooltip />
         <el-table-column label="操作" width="260" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleView(row)">
@@ -169,7 +187,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { getRoomPage, deleteRoom, getRoomTypes, getAdminLocations } from '@/api/modules/room'
+import { getRoomPage, deleteRoom, getRoomTypes, getAdminLocations, updateRoomStatus } from '@/api/modules/room'
 
 const router = useRouter()
 
@@ -191,6 +209,15 @@ const searchForm = reactive({
 const roomList = ref([])
 const roomTypes = ref([])
 const locationList = ref([])
+const statusOptions = [
+  { value: 1, label: '可用', color: 'success' },
+  { value: 2, label: '占用', color: 'warning' },
+  { value: 3, label: '维修', color: 'info' },
+  { value: 4, label: '清洁', color: 'primary' },
+  { value: 5, label: '停用', color: 'danger' }
+]
+const statusLoading = reactive({})
+const statusSnapshot = reactive({})
 
 // 方法
 const getRoomTypeName = (roomTypeId) => {
@@ -201,28 +228,6 @@ const getRoomTypeName = (roomTypeId) => {
 const getRoomTypeColor = (roomTypeId) => {
   const colors = ['', 'success', 'warning', 'danger']
   return colors[roomTypeId % 4] || ''
-}
-
-const getStatusName = (status) => {
-  const names = {
-    1: '可用',
-    2: '占用',
-    3: '维修',
-    4: '清洁',
-    5: '停用'
-  }
-  return names[status] || '未知'
-}
-
-const getStatusColor = (status) => {
-  const colors = {
-    1: 'success',
-    2: 'warning',
-    3: 'info',
-    4: 'primary',
-    5: 'danger'
-  }
-  return colors[status] || ''
 }
 
 const handleAdd = () => {
@@ -258,6 +263,30 @@ const handleDelete = async (row) => {
     } else if (error.message !== 'cancel') {
       ElMessage.error('删除失败，请重试')
     }
+  }
+}
+
+const handleStatusChange = async (row, newStatus) => {
+  const previousStatus = statusSnapshot[row.id]
+  if (newStatus === previousStatus) {
+    return
+  }
+  
+  statusLoading[row.id] = true
+  try {
+    await updateRoomStatus(row.id, newStatus)
+    statusSnapshot[row.id] = newStatus
+    ElMessage.success('房间状态更新成功')
+  } catch (error) {
+    row.status = previousStatus
+    statusSnapshot[row.id] = previousStatus
+    if (error.response?.data?.message) {
+      ElMessage.error(error.response.data.message)
+    } else {
+      ElMessage.error('更新房间状态失败，请重试')
+    }
+  } finally {
+    statusLoading[row.id] = false
   }
 }
 
@@ -299,8 +328,17 @@ const loadRoomList = async () => {
     
     const response = await getRoomPage(params)
     // 响应拦截器已经处理了成功响应，直接使用data
-    roomList.value = response.data.records
-    total.value = response.data.total
+    const records = response.data?.records ?? []
+    roomList.value = records
+    total.value = response.data?.total ?? 0
+    
+    // 更新状态快照和加载状态
+    Object.keys(statusSnapshot).forEach(key => delete statusSnapshot[key])
+    Object.keys(statusLoading).forEach(key => delete statusLoading[key])
+    records.forEach(room => {
+      statusSnapshot[room.id] = room.status
+      statusLoading[room.id] = false
+    })
   } catch (error) {
     console.error('获取房间列表失败:', error)
     ElMessage.error('获取房间列表失败')
@@ -357,6 +395,16 @@ onMounted(() => {
     padding: 20px;
     background: #f8f9fa;
     border-radius: 4px;
+  }
+  
+  .status-select {
+    width: 140px;
+  }
+  
+  .status-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   
   .pagination-wrapper {
