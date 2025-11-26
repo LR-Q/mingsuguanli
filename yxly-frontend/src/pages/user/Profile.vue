@@ -34,7 +34,7 @@
               <el-form :model="userForm" :rules="userRules" ref="userFormRef" label-width="100px">
                 <el-form-item label="头像">
                   <div class="avatar-section">
-                    <el-avatar :size="80" :src="userForm.avatar">
+                    <el-avatar :size="80" :src="normalizeUrl(userForm.avatar)">
                       {{ userForm.realName?.charAt(0) || userForm.username?.charAt(0) }}
                     </el-avatar>
                     <el-button size="small" @click="uploadAvatar">更换头像</el-button>
@@ -177,6 +177,11 @@ const userForm = reactive({
   phone: '',
   avatar: ''
 })
+
+const normalizeUrl = (url) => {
+  if (!url) return ''
+  return url.replace(/^http:\/\/localhost:9000\/txt\//, '/txt/')
+}
 
 // 密码修改表单
 const passwordForm = reactive({

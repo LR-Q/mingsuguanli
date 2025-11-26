@@ -25,7 +25,7 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3001, // 管理后台使用 3001 端口
+    port: 3002,
     host: '0.0.0.0',
     open: true,
     hmr: {
@@ -38,6 +38,11 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      },
+      '/txt': {
+        target: 'http://localhost:9000',
         changeOrigin: true,
         secure: false
       }

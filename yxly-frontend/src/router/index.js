@@ -125,6 +125,38 @@ const userRoutes = [
     ]
   },
   {
+    path: '/about',
+    name: 'About',
+    component: () => import('@/layouts/SimpleUserLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'AboutPage',
+        component: () => import('@/pages/user/About.vue'),
+        meta: {
+          title: '关于我们',
+          requiresAuth: false
+        }
+      }
+    ]
+  },
+  {
+    path: '/contact',
+    name: 'Contact',
+    component: () => import('@/layouts/SimpleUserLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'ContactPage',
+        component: () => import('@/pages/user/Contact.vue'),
+        meta: {
+          title: '联系我们',
+          requiresAuth: false
+        }
+      }
+    ]
+  },
+  {
     path: '/rooms/:id/book',
     name: 'BookRoom',
     component: () => import('@/layouts/UserLayout.vue'),
@@ -471,7 +503,7 @@ router.beforeEach(async (to, from, next) => {
     const isUserPage = to.path === '/home' || to.path.startsWith('/rooms') || to.path.startsWith('/user-center')
     
     if (isUserPage && (roleCode === 'SUPER_ADMIN' || roleCode === 'HOMESTAY_ADMIN')) {
-      ElMessage.warning('管理员请访问管理后台：http://localhost:3001')
+      ElMessage.warning('管理员请访问管理后台：http://localhost:3002')
       // 清除登录状态，要求重新登录
       authStore.clearUserInfo()
       next('/login')

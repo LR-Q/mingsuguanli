@@ -1,83 +1,66 @@
 <template>
   <div class="simple-user-layout">
-    <!-- 简单的顶部导航 -->
-    <header style="background: #409eff; color: white; padding: 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-      <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;">
-        <h1 style="margin: 0; font-size: 24px;" class="brand-title">悦鑫乐怡民宿</h1>
-        <nav style="display: flex; gap: 30px; align-items: center;">
-          <router-link to="/home" style="color: white; text-decoration: none; font-weight: 500;">首页</router-link>
-          <router-link to="/rooms" style="color: white; text-decoration: none; font-weight: 500;">房间预订</router-link>
-          
-          <!-- 根据登录状态显示不同内容 -->
-          <template v-if="isLoggedIn">
-            <el-dropdown @command="handleUserAction" trigger="click">
-              <span style="color: white; font-weight: 500; cursor: pointer; padding: 8px 12px; border-radius: 4px; transition: background 0.3s; display: flex; align-items: center; gap: 8px;" 
-                    class="user-dropdown-trigger">
-                <el-avatar :size="28" :src="userAvatar" style="background: rgba(255,255,255,0.2);">
-                  {{ userName.charAt(0) }}
-                </el-avatar>
-                <span>欢迎，{{ userName }}</span>
-                <el-icon><ArrowDown /></el-icon>
-              </span>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="profile">
-                    <el-icon><User /></el-icon>
-                    个人中心
-                  </el-dropdown-item>
-                  <el-dropdown-item command="wallet">
-                    <el-icon><Wallet /></el-icon>
-                    我的钱包
-                  </el-dropdown-item>
-                  <el-dropdown-item command="orders">
-                    <el-icon><Document /></el-icon>
-                    预订信息
-                  </el-dropdown-item>
-                  <el-dropdown-item command="favorites">
-                    <el-icon><Star /></el-icon>
-                    我的收藏
-                  </el-dropdown-item>
-                  <el-dropdown-item command="settings" divided>
-                    <el-icon><Setting /></el-icon>
-                    账户设置
-                  </el-dropdown-item>
-                  <el-dropdown-item command="logout" divided>
-                    <el-icon><SwitchButton /></el-icon>
-                    退出登录
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </template>
-          <template v-else>
-            <router-link 
-              to="/login" 
-              style="color: white; text-decoration: none; font-weight: 500; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; transition: all 0.3s;"
-              class="login-link"
-            >
-              登录
-            </router-link>
-            <router-link 
-              to="/register" 
-              style="color: white; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 4px; transition: all 0.3s;"
-              class="register-link"
-            >
-              注册
-            </router-link>
-          </template>
-          
-          <!-- 调试按钮（仅在检测到无效状态时显示） -->
-          <button 
-            v-if="authStore.token && !authStore.userInfo"
-            @click="forceLogout"
-            style="background: #f56c6c; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-left: 16px;"
-            title="检测到无效登录状态，点击清除"
-          >
-            清除无效状态
-          </button>
-        </nav>
-      </div>
-    </header>
+    <Header>
+      <template #nav>
+        <router-link to="/home" class="yx-header__link">首页</router-link>
+        <router-link to="/rooms" class="yx-header__link">房间预订</router-link>
+        <router-link to="/about" class="yx-header__link">关于我们</router-link>
+        <router-link to="/contact" class="yx-header__link">联系我们</router-link>
+        <span v-if="!isLoggedIn" class="nav-auth">
+          <router-link to="/login" class="login-link">登录</router-link>
+          <router-link to="/register" class="register-link">注册</router-link>
+        </span>
+      </template>
+      <template #actions>
+        <template v-if="isLoggedIn">
+          <el-dropdown @command="handleUserAction" trigger="click">
+            <span class="user-dropdown-trigger">
+              <el-avatar :size="28" :src="userAvatar">
+                {{ userName.charAt(0) }}
+              </el-avatar>
+              <span>欢迎，{{ userName }}</span>
+              <el-icon><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="profile">
+                  <el-icon><User /></el-icon>
+                  个人中心
+                </el-dropdown-item>
+                <el-dropdown-item command="wallet">
+                  <el-icon><Wallet /></el-icon>
+                  我的钱包
+                </el-dropdown-item>
+                <el-dropdown-item command="orders">
+                  <el-icon><Document /></el-icon>
+                  预订信息
+                </el-dropdown-item>
+                <el-dropdown-item command="favorites">
+                  <el-icon><Star /></el-icon>
+                  我的收藏
+                </el-dropdown-item>
+                <el-dropdown-item command="settings" divided>
+                  <el-icon><Setting /></el-icon>
+                  账户设置
+                </el-dropdown-item>
+                <el-dropdown-item command="logout" divided>
+                  <el-icon><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </template>
+        <button 
+          v-if="authStore.token && !authStore.userInfo"
+          @click="forceLogout"
+          class="logout-badge"
+          title="检测到无效登录状态，点击清除"
+        >
+          清除无效状态
+        </button>
+      </template>
+    </Header>
 
     <!-- 主要内容区域 -->
     <main style="min-height: calc(100vh - 140px);">
@@ -85,8 +68,8 @@
     </main>
 
     <!-- 简单的底部 -->
-    <footer style="background: #2c3e50; color: white; padding: 20px 0; text-align: center;">
-      <p style="margin: 0;">&copy; 2025 悦鑫乐怡民宿管理系统. 由LuoRui开发.</p>
+    <footer class="simple-footer">
+      <p>&copy; 2025 悦鑫乐怡民宿管理系统. 由LuoRui开发.</p>
     </footer>
   </div>
 </template>
@@ -106,6 +89,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/modules/auth'
 import { clearInvalidAuth } from '@/utils/clearInvalidAuth'
+import Header from '@/components/Header.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -213,14 +197,22 @@ main {
 
 /* 路由链接激活状态 */
 a.router-link-active {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 8px 16px;
-  border-radius: 4px;
+  background: rgba(2, 6, 23, 0.06);
+  color: var(--text-1);
+  border-radius: 8px;
 }
 
 /* 用户下拉菜单触发器悬停效果 */
 .user-dropdown-trigger:hover {
   background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 菜单内登录/注册排版 */
+.nav-auth {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 16px;
 }
 
 /* 登录相关按钮样式 */
@@ -251,5 +243,14 @@ a.router-link-active {
       color: #409eff;
     }
   }
+}
+:root .login-link {
+  color: white; text-decoration: none; font-weight: 600; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; transition: all 0.3s;
+}
+:root .register-link {
+  color: white; text-decoration: none; font-weight: 600; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 6px; transition: all 0.3s;
+}
+.logout-badge {
+  background: #f56c6c; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-left: 16px;
 }
 </style>

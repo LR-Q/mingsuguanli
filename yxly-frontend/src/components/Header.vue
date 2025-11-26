@@ -2,8 +2,7 @@
   <header class="yx-header" :class="{ 'yx-header--scrolled': isScrolled }">
     <div class="container yx-header__container">
       <div class="yx-header__brand">
-        <img class="yx-header__logo" src="/logo.svg" alt="Logo" />
-        <span class="yx-header__title">悦鑫乐怡 · 民宿</span>
+        <span class="yx-header__title brand-title">悦鑫乐怡民宿</span>
       </div>
       <nav class="yx-header__nav">
         <slot name="nav">
@@ -14,7 +13,10 @@
         </slot>
       </nav>
       <div class="yx-header__actions">
-        <slot name="actions" />
+        <slot name="actions">
+          <router-link to="/login" class="login-link"> 登录 </router-link>
+          <router-link to="/register" class="register-link"> 注册 </router-link>
+        </slot>
       </div>
     </div>
   </header>
@@ -56,10 +58,18 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   }
 
   &__brand {
-    display: inline-flex; align-items: center; gap: var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
   }
-  &__logo { width: 28px; height: 28px; }
-  &__title { font-weight: 700; color: var(--text-1); letter-spacing: .2px; }
+
+  &__title {
+    color: var(--brand-primary, #3b82f6);
+    font-weight: 500;
+    font-size: clamp(22px, 2.2vw, 28px);
+    line-height: 1.1;
+    letter-spacing: 2px;
+  }
 
   &__nav {
     display: none; gap: var(--space-4);
@@ -82,3 +92,12 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
 </style>
 
 
+:root .login-link {
+  color: #2468f2; text-decoration: none; font-weight: 600; padding: 8px 12px; border: 1px solid #2468f2; border-radius: 8px; transition: all var(--duration-150) var(--ease-out);
+}
+:root .login-link:hover { background: #2468f2; color: #fff; }
+
+:root .register-link {
+  color: #fff; background: #2468f2; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 8px; transition: background var(--duration-150) var(--ease-out);
+}
+:root .register-link:hover { background: #1d54c5; }

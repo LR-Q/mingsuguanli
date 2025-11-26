@@ -106,8 +106,13 @@ const userName = computed(() => {
   return authStore.userInfo?.realName || authStore.userInfo?.username || '用户'
 })
 
+const normalizeUrl = (url) => {
+  if (!url) return ''
+  return url.replace(/^http:\/\/localhost:9000\/txt\//, '/txt/')
+}
+
 const userAvatar = computed(() => {
-  return authStore.userInfo?.avatar || ''
+  return normalizeUrl(authStore.userInfo?.avatar || '')
 })
 
 const menuRoutes = computed(() => {

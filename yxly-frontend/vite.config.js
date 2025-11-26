@@ -40,6 +40,11 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false
+      },
+      '/txt': {
+        target: 'http://localhost:9000',
+        changeOrigin: true,
+        secure: false
       }
     }
   },

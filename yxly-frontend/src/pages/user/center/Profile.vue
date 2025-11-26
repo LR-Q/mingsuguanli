@@ -92,7 +92,7 @@
       
       <div class="avatar-section">
         <div class="avatar-preview">
-          <el-avatar :size="120" :src="profileForm.avatar">
+          <el-avatar :size="120" :src="normalizeUrl(profileForm.avatar)">
             {{ profileForm.realName?.charAt(0) || profileForm.username?.charAt(0) }}
           </el-avatar>
         </div>
@@ -206,6 +206,11 @@ const profileForm = reactive({
   emailVerified: false,
   phoneVerified: false
 })
+
+const normalizeUrl = (url) => {
+  if (!url) return ''
+  return url.replace(/^http:\/\/localhost:9000\/txt\//, '/txt/')
+}
 
 // 原始数据备份
 const originalData = reactive({})

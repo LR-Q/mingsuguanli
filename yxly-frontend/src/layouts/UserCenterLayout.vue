@@ -141,8 +141,13 @@ const userEmail = computed(() => {
   return authStore.userInfo?.email || ''
 })
 
+const normalizeUrl = (url) => {
+  if (!url) return ''
+  return url.replace(/^http:\/\/localhost:9000\/txt\//, '/txt/')
+}
+
 const userAvatar = computed(() => {
-  return authStore.userInfo?.avatar || ''
+  return normalizeUrl(authStore.userInfo?.avatar || '')
 })
 
 const currentPageTitle = computed(() => {

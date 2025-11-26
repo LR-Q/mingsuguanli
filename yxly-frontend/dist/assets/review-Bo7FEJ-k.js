@@ -1,0 +1,1 @@
+import{d as r}from"./index-rlk3mQiZ.js";function t(e,o){return r({url:`/api/user/reviews/room/${e}`,method:"GET",params:o})}function i(e){return r({url:"/api/user/reviews",method:"POST",data:e})}export{t as g,i as s};

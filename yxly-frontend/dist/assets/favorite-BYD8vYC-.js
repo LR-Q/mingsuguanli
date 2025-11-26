@@ -1,0 +1,1 @@
+import{d as r}from"./index-rlk3mQiZ.js";function a(e){return r({url:"/api/user/favorites",method:"GET",params:e})}function o(e){return r({url:`/api/user/favorites/${e}`,method:"DELETE"})}function i(e){return r({url:"/api/user/favorites/check-batch",method:"POST",data:{roomIds:e}})}export{i as c,a as g,o as r};

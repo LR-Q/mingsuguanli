@@ -1,0 +1,29 @@
+@mixin homestay-auth-background($image-url: '@/assets/images/homestay-bg.jpg') {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-image: url($image-url);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@mixin homestay-auth-card($max-width: 440px) {
+  width: 100%;
+  max-width: $max-width;
+  padding: 42px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 30px 80px rgba(12, 41, 36, 0.3);
+  backdrop-filter: blur(14px) saturate(135%);
+}
