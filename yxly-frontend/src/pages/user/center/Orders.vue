@@ -489,19 +489,19 @@ const loadOrders = async () => {
     const response = await getMyBookingList(params)
     
     // 处理响应数据
-    if (response.data && response.data.records) {
-      orders.value = response.data.records.map(order => ({
-        id: order.id,
-        roomId: order.roomId,
-        orderNumber: order.orderNo,
-        roomName: order.roomName || '房间',
-        roomType: order.roomType || '',
-        roomImage: '/api/placeholder/300/200',
-        roomPrice: order.roomPrice,
-        checkInDate: order.checkInDate,
-        checkOutDate: order.checkOutDate,
-        nights: order.nights,
-        guests: order.guestsCount,
+        if (response.data && response.data.records) {
+          orders.value = response.data.records.map(order => ({
+            id: order.id,
+            roomId: order.roomId,
+            orderNumber: order.orderNo,
+            roomName: order.roomName || '房间',
+            roomType: order.roomType || '',
+            roomImage: order.roomImage || '/api/placeholder/300/200',
+            roomPrice: order.roomPrice,
+            checkInDate: order.checkInDate,
+            checkOutDate: order.checkOutDate,
+            nights: order.nights,
+            guests: order.guestsCount,
         contactName: order.contactName,
         contactPhone: order.contactPhone,
         specialRequests: order.specialRequests,

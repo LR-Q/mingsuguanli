@@ -3,6 +3,7 @@ package com.yxly.controller.admin;
 import com.yxly.common.Result;
 import com.yxly.dto.request.AdminResetPasswordRequest;
 import com.yxly.dto.request.MerchantAuditRequest;
+import com.yxly.dto.request.MerchantStatusUpdateRequest;
 import com.yxly.dto.response.MerchantAuditVO;
 import com.yxly.service.MerchantService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -84,5 +85,16 @@ public class MerchantAuditController {
         log.info("重置商户密码: merchantId={}", request.getMerchantId());
         merchantService.resetMerchantPassword(request);
         return Result.success(null, "密码重置成功");
+    }
+
+    /**
+     * 启用/禁用商户
+     */
+    @PutMapping("/status")
+    @Operation(summary = "启用/禁用商户", description = "仅已通过审核的商户可启用或禁用")
+    public Result<Void> updateMerchantStatus(@Valid @RequestBody MerchantStatusUpdateRequest request) {
+        log.info("更新商户状态: merchantId={}, status={}", request.getMerchantId(), request.getStatus());
+        merchantService.updateMerchantStatus(request.getMerchantId(), request.getStatus());
+        return Result.success(null, request.getStatus() == 1 ? "已启用" : "已禁用");
     }
 }

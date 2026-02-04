@@ -67,6 +67,12 @@ public class RoomResponse {
     @Schema(description = "房间图片(JSON格式)", example = "[\"image1.jpg\",\"image2.jpg\"]")
     private String images;
 
+    @Schema(description = "首页推荐(0否,1是)", example = "1")
+    private Integer isRecommended;
+
+    @Schema(description = "推荐时间", example = "2025-11-28T10:30:00")
+    private LocalDateTime recommendTime;
+
     @Schema(description = "WiFi密码", example = "room101wifi")
     private String wifiPassword;
 

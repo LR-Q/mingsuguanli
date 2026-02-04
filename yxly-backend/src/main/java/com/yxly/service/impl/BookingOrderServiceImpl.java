@@ -25,13 +25,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -240,58 +243,50 @@ public class BookingOrderServiceImpl implements BookingOrderService {
      * 将订单分页转换为响应DTO分页
      */
     private IPage<BookingOrderResponse> convertToResponsePage(IPage<BookingOrder> orderPage) {
-        try {
-            log.debug("开始转换订单分页数据，共 {} 条记录", orderPage.getRecords().size());
-            
-            IPage<BookingOrderResponse> responsePage = orderPage.convert(order -> {
-                try {
-                    BookingOrderResponse response = new BookingOrderResponse();
-                    BeanUtils.copyProperties(order, response);
-                    
-                    log.debug("处理订单: id={}, orderNo={}, roomId={}", order.getId(), order.getOrderNo(), order.getRoomId());
-                    
-                    // 获取房间信息
-                    if (order.getRoomId() != null) {
-                        RoomInfo room = roomInfoMapper.selectById(order.getRoomId());
-                        if (room != null) {
-                            response.setRoomNumber(room.getRoomNumber());
-                            
-                            // 获取房间类型
-                            if (room.getRoomTypeId() != null) {
-                                RoomType roomType = roomTypeMapper.selectById(room.getRoomTypeId());
-                                if (roomType != null) {
-                                    response.setRoomType(roomType.getTypeName());
-                                    response.setRoomName(room.getRoomNumber() + "号房 - " + roomType.getTypeName());
-                                } else {
-                                    response.setRoomName(room.getRoomNumber() + "号房");
-                                }
+        log.debug("开始转换订单分页数据，共 {} 条记录", orderPage.getRecords().size());
+        IPage<BookingOrderResponse> responsePage = orderPage.convert(order -> {
+            BookingOrderResponse response = new BookingOrderResponse();
+            try {
+                BeanUtils.copyProperties(order, response);
+                log.debug("处理订单: id={}, orderNo={}, roomId={}", order.getId(), order.getOrderNo(), order.getRoomId());
+                if (order.getRoomId() != null) {
+                    RoomInfo room = roomInfoMapper.selectById(order.getRoomId());
+                    if (room != null) {
+                        response.setRoomNumber(room.getRoomNumber());
+                        response.setRoomImage(extractFirstImage(room.getImages()));
+                        if (room.getRoomTypeId() != null) {
+                            RoomType roomType = roomTypeMapper.selectById(room.getRoomTypeId());
+                            if (roomType != null) {
+                                response.setRoomType(roomType.getTypeName());
+                                response.setRoomName(room.getRoomNumber() + "号房 - " + roomType.getTypeName());
                             } else {
                                 response.setRoomName(room.getRoomNumber() + "号房");
                             }
                         } else {
-                            log.warn("订单{}关联的房间{}不存在", order.getId(), order.getRoomId());
-                            response.setRoomNumber("未知");
-                            response.setRoomName("未知房间");
+                            response.setRoomName(room.getRoomNumber() + "号房");
                         }
+                    } else {
+                        log.warn("订单{}关联的房间{}不存在", order.getId(), order.getRoomId());
+                        response.setRoomNumber("未知");
+                        response.setRoomName("未知房间");
                     }
-                    
-                    // 设置状态名称
-                    response.setBookingStatusName(BOOKING_STATUS_MAP.get(order.getBookingStatus()));
-                    response.setPaymentStatusName(PAYMENT_STATUS_MAP.get(order.getPaymentStatus()));
-                    
-                    return response;
-                } catch (Exception e) {
-                    log.error("转换订单数据失败: orderId={}", order.getId(), e);
-                    throw new RuntimeException("转换订单数据失败", e);
                 }
-            });
-            
-            log.debug("订单分页数据转换完成");
-            return responsePage;
-        } catch (Exception e) {
-            log.error("转换订单分页数据失败", e);
-            throw e;
-        }
+                response.setBookingStatusName(BOOKING_STATUS_MAP.get(order.getBookingStatus()));
+                response.setPaymentStatusName(PAYMENT_STATUS_MAP.get(order.getPaymentStatus()));
+            } catch (Exception e) {
+                log.error("转换订单数据失败(忽略该记录继续): orderId={}, err={}", order.getId(), e.getMessage(), e);
+                // 最小化返回，避免前端崩溃
+                response.setId(order.getId());
+                response.setOrderNo(order.getOrderNo());
+                response.setBookingStatus(order.getBookingStatus());
+                response.setPaymentStatus(order.getPaymentStatus());
+                response.setBookingStatusName(BOOKING_STATUS_MAP.get(order.getBookingStatus()));
+                response.setPaymentStatusName(PAYMENT_STATUS_MAP.get(order.getPaymentStatus()));
+            }
+            return response;
+        });
+        log.debug("订单分页数据转换完成");
+        return responsePage;
     }
     
     @Override
@@ -315,6 +310,7 @@ public class BookingOrderServiceImpl implements BookingOrderService {
         RoomInfo room = roomInfoMapper.selectById(order.getRoomId());
         if (room != null) {
             response.setRoomNumber(room.getRoomNumber());
+            response.setRoomImage(extractFirstImage(room.getImages()));
             
             if (room.getRoomTypeId() != null) {
                 RoomType roomType = roomTypeMapper.selectById(room.getRoomTypeId());
@@ -348,6 +344,7 @@ public class BookingOrderServiceImpl implements BookingOrderService {
         RoomInfo room = roomInfoMapper.selectById(order.getRoomId());
         if (room != null) {
             response.setRoomNumber(room.getRoomNumber());
+            response.setRoomImage(extractFirstImage(room.getImages()));
             
             if (room.getRoomTypeId() != null) {
                 RoomType roomType = roomTypeMapper.selectById(room.getRoomTypeId());
@@ -659,6 +656,34 @@ public class BookingOrderServiceImpl implements BookingOrderService {
         }
         
         log.info("办理退房成功: orderId={}，订单已完成", id);
+    }
+
+    /**
+     * 从房间图片字段提取首图
+     */
+    private String extractFirstImage(String images) {
+        if (!StringUtils.hasText(images)) {
+            return null;
+        }
+        String trimmed = images.trim();
+        // 去除首尾[]或引号
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            trimmed = trimmed.substring(1, trimmed.length() - 1);
+        }
+        String[] parts = trimmed.split(",");
+        for (String part : parts) {
+            String url = part.trim();
+            if (url.startsWith("\"") || url.startsWith("'")) {
+                url = url.substring(1);
+            }
+            if (url.endsWith("\"") || url.endsWith("'")) {
+                url = url.substring(0, url.length() - 1);
+            }
+            if (StringUtils.hasText(url)) {
+                return url;
+            }
+        }
+        return null;
     }
     
     /**

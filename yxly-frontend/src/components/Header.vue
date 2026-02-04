@@ -55,6 +55,9 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   &__container {
     display: flex; align-items: center; justify-content: space-between;
     height: 64px;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 24px;
   }
 
   &__brand {
@@ -65,24 +68,30 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
 
   &__title {
     color: var(--brand-primary, #3b82f6);
-    font-weight: 500;
-    font-size: clamp(22px, 2.2vw, 28px);
+    font-weight: 600;
+    font-size: clamp(24px, 2.2vw, 32px);
     line-height: 1.1;
     letter-spacing: 2px;
   }
 
   &__nav {
-    display: none; gap: var(--space-4);
+    display: none; gap: 32px;
     @media (min-width: 768px) { display: inline-flex; }
   }
   &__link {
-    color: var(--text-2);
-    padding: 8px 10px; border-radius: 8px;
+    color: #2c3e50;
+    padding: 10px 18px; 
+    border-radius: 8px;
+    font-size: 17px;
+    font-weight: 600;
     transition: color var(--duration-150) var(--ease-out), background var(--duration-150) var(--ease-out);
   }
-  &__link:hover { color: var(--text-1); background: rgba(2,6,23,0.04); }
+  &__link:hover { 
+    color: #409eff; 
+    background: rgba(64, 158, 255, 0.1); 
+  }
 
-  &__actions { display: inline-flex; gap: var(--space-3); }
+  &__actions { display: inline-flex; gap: var(--space-4); align-items: center; }
 }
 
 :global([data-theme="dark"]) .yx-header {

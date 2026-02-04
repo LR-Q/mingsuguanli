@@ -144,38 +144,54 @@ const handleLogin = async () => {
 <style scoped>
 .admin-login-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-login-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/auth-bg.jpg'), url('@/assets/images/homestay-bg.jpg');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  filter: brightness(0.6);
+  z-index: 0;
 }
 
 .admin-login-form {
   background: white;
-  padding: 40px;
-  border-radius: 12px;
+  padding: 48px 56px;
+  border-radius: 16px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 400px;
+  max-width: 520px;
+  position: relative;
+  z-index: 1;
 }
 
 .admin-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 36px;
 }
 
 .admin-header h2 {
   color: #333;
   margin: 0 0 10px 0;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
 }
 
 .admin-subtitle {
   color: #666;
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 500;
 }
 
@@ -183,7 +199,7 @@ const handleLogin = async () => {
   text-align: center;
   width: 100%;
   color: #999;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .user-login-link .el-link {
@@ -191,15 +207,18 @@ const handleLogin = async () => {
 }
 
 :deep(.el-form-item) {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 :deep(.el-input__wrapper) {
   border-radius: 8px;
+  padding: 12px 14px;
 }
 
 :deep(.el-button) {
   border-radius: 8px;
   font-weight: 500;
+  height: 50px;
+  font-size: 16px;
 }
 </style>

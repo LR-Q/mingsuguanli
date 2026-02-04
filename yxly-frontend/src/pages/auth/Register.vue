@@ -292,30 +292,47 @@ const handleRegister = async () => {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/images/auth-bg.jpg'), url('@/assets/images/homestay-bg.jpg');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    filter: brightness(0.6);
+    z-index: 0;
+  }
   
   .register-box {
-    width: 400px;
-    padding: 40px;
+    width: 520px;
+    max-width: 95%;
+    padding: 48px 56px;
     background: white;
-    border-radius: 8px;
+    border-radius: 14px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
     
     .register-header {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 36px;
       
       h2 {
         margin: 0 0 8px 0;
         color: #303133;
-        font-size: 24px;
+        font-size: 28px;
         font-weight: 500;
       }
       
       p {
         margin: 0;
         color: #909399;
-        font-size: 14px;
+        font-size: 16px;
       }
     }
     
@@ -328,9 +345,24 @@ const handleRegister = async () => {
       .login-link {
         text-align: center;
         color: #909399;
-        font-size: 14px;
+        font-size: 15px;
       }
     }
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 24px;
+  }
+
+  :deep(.el-input__wrapper) {
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  :deep(.el-button) {
+    height: 50px;
+    font-size: 16px;
+    border-radius: 10px;
   }
 }
 </style>

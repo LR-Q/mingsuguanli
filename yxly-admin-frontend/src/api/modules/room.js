@@ -134,3 +134,16 @@ export function getAdminLocations() {
     method: 'GET'
   })
 }
+
+/**
+ * 按房间获取评论列表（管理员）
+ * @param {number} roomId 房间ID
+ * @param {Object} params 分页参数 { current, size }
+ */
+export function getRoomReviews(roomId, params) {
+  return request({
+    url: `/api/v1/admin/rooms/${roomId}/reviews`,
+    method: 'GET',
+    params
+  })
+}

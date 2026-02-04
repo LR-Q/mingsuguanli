@@ -342,7 +342,21 @@ const handleRegister = async () => {
   justify-content: center;
   min-height: 100vh;
   padding: 40px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/images/auth-bg.jpg'), url('@/assets/images/homestay-bg.jpg');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    filter: brightness(0.6);
+    z-index: 0;
+  }
   
   .register-box {
     width: 500px;
@@ -351,6 +365,8 @@ const handleRegister = async () => {
     background: white;
     border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
     
     .register-header {
       text-align: center;

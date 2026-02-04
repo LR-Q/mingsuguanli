@@ -327,6 +327,40 @@ public class MerchantServiceImpl implements MerchantService {
         
         return vo;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateMerchantStatus(Long merchantId, Integer status) {
+        log.info("更新商户启用状态: merchantId={}, status={}", merchantId, status);
+
+        if (status != 0 && status != 1) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "状态值不合法");
+        }
+
+        MerchantInfo merchantInfo = merchantInfoMapper.selectById(merchantId);
+        if (merchantInfo == null || merchantInfo.getDeleted() == 1) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "商户不存在");
+        }
+
+        if (merchantInfo.getAuditStatus() == null || merchantInfo.getAuditStatus() != 1) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "仅已通过审核的商户可启用或禁用");
+        }
+
+        SysUser user = userMapper.selectById(merchantInfo.getAdminUserId());
+        if (user == null || user.getDeleted() == 1) {
+            throw new BusinessException(ResultCode.USER_NOT_FOUND, "商户管理员账号不存在");
+        }
+
+        merchantInfo.setStatus(status);
+        merchantInfo.setUpdateTime(LocalDateTime.now());
+        merchantInfoMapper.updateById(merchantInfo);
+
+        user.setStatus(status);
+        user.setUpdateTime(LocalDateTime.now());
+        userMapper.updateById(user);
+
+        log.info("商户状态更新完成: merchantId={}, status={}, userId={}", merchantId, status, user.getId());
+    }
     
     @Override
     public List<MerchantSimpleVO> getAdminMerchants(Long adminUserId) {

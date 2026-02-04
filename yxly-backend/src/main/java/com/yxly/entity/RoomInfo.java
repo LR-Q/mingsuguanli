@@ -108,6 +108,18 @@ public class RoomInfo {
     private String images;
 
     /**
+     * 首页推荐(0否,1是)
+     */
+    @TableField("is_recommended")
+    private Integer isRecommended;
+
+    /**
+     * 推荐时间
+     */
+    @TableField("recommend_time")
+    private LocalDateTime recommendTime;
+
+    /**
      * WiFi密码
      */
     @TableField("wifi_password")

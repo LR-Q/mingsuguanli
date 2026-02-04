@@ -2,13 +2,21 @@ package com.yxly.security;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.yxly.entity.SysUser;
+import com.yxly.entity.SysRole;
 import com.yxly.mapper.SysUserMapper;
+import com.yxly.mapper.SysRoleMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Spring Security用户详情服务实现
@@ -22,6 +30,7 @@ import org.springframework.stereotype.Service;
 public class UserDetailsServiceImpl implements UserDetailsService {
     
     private final SysUserMapper userMapper;
+    private final SysRoleMapper roleMapper;
     
     @Override
     public UserDetails loadUserByUsername(String account) throws UsernameNotFoundException {
@@ -50,7 +59,19 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("用户已被禁用: " + account);
         }
         
-        // 返回包含完整用户信息的 UserPrincipal
-        return new UserPrincipal(user);
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+        if (user.getRoleId() != null) {
+            SysRole role = roleMapper.selectById(user.getRoleId());
+            if (role != null && role.getStatus() != null && role.getStatus() == 1) {
+                String code = role.getRoleCode();
+                if (code != null && !code.isEmpty()) {
+                    String roleName = "ROLE_" + code.toUpperCase(Locale.ROOT);
+                    authorities.add(new SimpleGrantedAuthority(roleName));
+                }
+            }
+        }
+        
+        return new UserPrincipal(user, authorities);
     }
 }

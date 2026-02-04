@@ -2,994 +2,495 @@
   <div class="home-container">
     <div class="header">
       <h1 class="title brand-title">悦鑫乐怡民宿</h1>
-      <p class="subtitle">欢迎来到我们的民宿预订系统</p>
+      <p class="subtitle">民宿推荐</p>
     </div>
-    
-    <!-- 地图和导航面板 -->
-    <div class="map-navigation-wrapper">
-      <!-- 地图区域 -->
-      <div class="map-section">
-        <div id="user-home-map" class="map-container"></div>
-        
-        <!-- 路况控制按钮 -->
-        <div class="map-controls">
-          <el-button 
-            :type="showTraffic ? 'primary' : 'default'"
-            size="small"
-            @click="toggleTraffic"
-          >
-            {{ showTraffic ? '关闭路况' : '开启路况' }}
-          </el-button>
+
+    <section class="geo-section">
+      <div class="geo-header">
+        <h2>定位并推荐最近民宿</h2>
+        <p class="desc">获取您的当前位置，与各民宿位置计算距离，推荐距离最近的民宿</p>
+      </div>
+      <div class="geo-actions">
+        <el-button type="primary" :loading="locating" @click="locateUser">定位我的位置</el-button>
+        <span class="status" v-if="userPos">已定位</span>
+        <span class="status warn" v-else>尚未定位</span>
+        <el-button type="text" v-if="userPos" @click="clearUserLocation">清除定位</el-button>
+      </div>
+      <div v-if="nearestLocation" class="nearest-card">
+        <div class="nearest-info">
+          <div class="location-row">
+            <span class="label">民宿：</span>
+            <el-select v-model="selectedLocationId" placeholder="选择民宿" filterable size="small" class="location-select">
+              <el-option
+                v-for="l in locationOptions"
+                :key="l.id"
+                :label="`${l.name}${l.distanceKm!=null ? `（${l.distanceKm.toFixed(2)} km）` : ''}`"
+                :value="l.id"
+              />
+            </el-select>
+          </div>
+          <p class="distance" v-if="activeDistanceKm !== null">约 {{ activeDistanceKm.toFixed(2) }} km</p>
+          <p class="distance warn" v-else>无法计算距离，需先定位</p>
+          
+          <div class="nearest-actions">
+            <el-button type="primary" @click="openNearest">查看该民宿房源</el-button>
+          </div>
+        </div>
+        <div class="nearest-rooms" v-if="nearestRooms.length">
+          <div class="mini-card" v-for="r in nearestRooms" :key="r.id">
+            <div class="mini-img">
+              <el-image v-if="r.currentImage" :src="r.currentImage" fit="cover" />
+              <div v-else class="image-placeholder">
+                <el-icon size="28"><Picture /></el-icon>
+              </div>
+            </div>
+            <div class="mini-content">
+              <div class="title">{{ r.roomTypeName || '房型' }}</div>
+              <div class="meta">￥{{ r.price }}/晚 · 最多{{ r.maxGuests || 1 }}人</div>
+              <el-button type="primary" size="small" @click="book(r)">预订</el-button>
+            </div>
+          </div>
         </div>
       </div>
-      
-      <!-- 导航面板 -->
-      <div class="navigation-panel">
-        <div class="panel-header">
-          <h3>路线导航</h3>
-        </div>
-        
-        <!-- 导航方式选择 -->
-        <div class="nav-mode-tabs">
-          <el-radio-group v-model="navMode" size="small" @change="handleNavModeChange">
-            <el-radio-button label="driving">驾车</el-radio-button>
-            <el-radio-button label="walking">步行</el-radio-button>
-            <el-radio-button label="transit">公交</el-radio-button>
-            <el-radio-button label="riding">骑行</el-radio-button>
-          </el-radio-group>
-        </div>
-        
-        <!-- 起点 -->
-        <div class="route-point">
-          <div class="point-label start-label">起点</div>
-          <el-autocomplete
-            v-model="startAddress"
-            :fetch-suggestions="searchLocation"
-            placeholder="输入起点地址"
-            @select="handleStartSelect"
-            style="width: 100%"
-            clearable
-          >
-            <template #prefix>
-              <el-icon><Location /></el-icon>
-            </template>
-            <template #suffix>
-              <el-button 
-                link 
-                type="primary"
-                size="small"
-                @click="getMyLocation"
-                :loading="gettingLocation"
-              >
-                {{ gettingLocation ? '定位中...' : '我的位置' }}
-              </el-button>
-            </template>
-          </el-autocomplete>
-        </div>
-        
-        <!-- 途经点列表 -->
-        <div class="waypoints-section">
-          <draggable 
-            v-model="waypoints" 
-            item-key="id"
-            handle=".drag-handle"
-            @end="handleWaypointReorder"
-          >
-            <template #item="{ element, index }">
-              <div class="route-point waypoint-item">
-                <div class="point-label waypoint-label">
-                  <el-icon class="drag-handle" style="cursor: move;">
-                    <Rank />
-                  </el-icon>
-                  途经 {{ index + 1 }}
+    </section>
+
+    <section class="recommend-section">
+      <div class="recommend-header">
+        <h2>民宿推荐</h2>
+        <p class="desc">展示由平台超级管理员配置的首页推荐房源</p>
+      </div>
+      <div v-if="loading && rooms.length === 0" class="loading-container">
+        <el-skeleton :rows="4" animated />
+      </div>
+      <div v-else-if="rooms.length === 0" class="empty-container">
+        <el-empty description="暂无首页推荐">
+          <el-button type="primary" @click="reload">重新加载</el-button>
+          <el-button @click="$router.push('/rooms')" style="margin-left:8px">去全部房间</el-button>
+        </el-empty>
+      </div>
+      <div v-else class="rooms-grid">
+        <div class="room-card" v-for="room in rooms" :key="room.id">
+          <div class="room-image">
+            <el-image v-if="room.currentImage" :src="room.currentImage" fit="cover" class="room-img">
+              <template #error>
+                <div class="image-placeholder">
+                  <el-icon size="60"><Picture /></el-icon>
+                  <p>房间图片</p>
                 </div>
-                <div class="waypoint-input-group">
-                  <el-autocomplete
-                    v-model="element.address"
-                    :fetch-suggestions="searchLocation"
-                    placeholder="输入途经点地址"
-                    @select="(item) => handleWaypointSelect(index, item)"
-                    style="flex: 1"
-                    clearable
-                  >
-                    <template #prefix>
-                      <el-icon><Guide /></el-icon>
-                    </template>
-                  </el-autocomplete>
-                  <el-button 
-                    type="danger" 
-                    size="small"
-                    :icon="Delete"
-                    circle
-                    @click="removeWaypoint(index)"
-                  />
-                </div>
+              </template>
+            </el-image>
+            <div v-else class="image-placeholder">
+              <el-icon size="60"><Picture /></el-icon>
+              <p>房间图片</p>
+            </div>
+          </div>
+          <div class="room-content">
+            <div class="room-info">
+              <h3>{{ room.roomTypeName || '单人房' }}</h3>
+              <p class="room-location" v-if="room.locationName">
+                <el-icon><Location /></el-icon>
+                {{ room.locationName }}
+              </p>
+              <p class="room-desc">{{ room.description || '舒适单人间，适合差旅与独行旅行' }}</p>
+              <div class="room-details">
+                <span><el-icon><User /></el-icon> 最多{{ room.maxGuests || 1 }}人</span>
+                <span><el-icon><Expand /></el-icon> {{ room.area || 18 }}㎡</span>
+                <span>{{ room.bedType || '单人床' }}</span>
               </div>
-            </template>
-          </draggable>
-          
-          <!-- 添加途经点按钮 -->
-          <el-button 
-            v-if="waypoints.length < 10"
-            type="primary" 
-            plain
-            size="small"
-            @click="addWaypoint"
-            style="width: 100%; margin-top: 10px"
-          >
-            <el-icon><Plus /></el-icon>
-            添加途经点 ({{ waypoints.length }}/10)
-          </el-button>
-        </div>
-        
-        <!-- 终点 -->
-        <div class="route-point">
-          <div class="point-label end-label">终点</div>
-          <el-select
-            v-model="selectedDestinationId"
-            placeholder="选择民宿位置"
-            @change="handleDestinationSelect"
-            style="width: 100%"
-            clearable
-          >
-            <el-option
-              v-for="location in locationList"
-              :key="location.id"
-              :label="location.name"
-              :value="location.id"
-            >
-              <div style="display: flex; justify-content: space-between;">
-                <span>{{ location.name }}</span>
-                <span style="color: #999; font-size: 12px;">{{ location.address }}</span>
+            </div>
+            <div class="room-actions">
+              <div class="price-info">
+                <span class="price">￥{{ room.price }}</span>
+                <span class="unit">/晚</span>
               </div>
-            </el-option>
-          </el-select>
-        </div>
-        
-        <!-- 开始导航按钮 -->
-        <el-button 
-          type="primary" 
-          size="large"
-          @click="startNavigation"
-          :loading="calculating"
-          :disabled="!canNavigate"
-          style="width: 100%; margin-top: 20px"
-        >
-          {{ calculating ? '计算路线中...' : '开始导航' }}
-        </el-button>
-        
-        <!-- 路线信息 -->
-        <div v-if="routeInfo" class="route-info">
-          <el-divider />
-          <div class="info-item">
-            <el-icon><Location /></el-icon>
-            <span>总距离：{{ routeInfo.distance }}</span>
+              <div class="action-buttons">
+                <el-button type="primary" size="large" @click="book(room)">立即预订</el-button>
+                <el-button size="large" @click="view(room)">查看详情</el-button>
+              </div>
+            </div>
           </div>
-          <div class="info-item">
-            <el-icon><Clock /></el-icon>
-            <span>预计时间：{{ routeInfo.duration }}</span>
-          </div>
-          <div v-if="routeInfo.taxiFare" class="info-item">
-            <el-icon><Money /></el-icon>
-            <span>打车费用：约{{ routeInfo.taxiFare }}元</span>
-          </div>
-          
-          <!-- 清除路线按钮 -->
-          <el-button 
-            type="warning" 
-            plain
-            size="small"
-            @click="clearRoute"
-            style="width: 100%; margin-top: 10px"
-          >
-            清除路线
-          </el-button>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Location, Clock, Money, Plus, Delete, Guide, Rank } from '@element-plus/icons-vue'
-import draggable from 'vuedraggable'
-import { getActiveLocationList } from '@/api/modules/location'
+import { Picture, User, Expand, Location } from '@element-plus/icons-vue'
+import { getAvailableRooms, getUserRoomTypes, getUserLocations } from '@/api/modules/userRoom'
 
-// 地图相关
-let userMap = null
-let trafficLayer = null
-let currentRoute = null
-const locationList = ref([])
-
-// 导航状态
-const navMode = ref('driving') // driving, walking, transit, riding
-const showTraffic = ref(false)
-const calculating = ref(false)
-const gettingLocation = ref(false)
-
-// 起点终点
-const startAddress = ref('')
-const startPoint = ref(null)
-const selectedDestinationId = ref(null)
-const destinationPoint = ref(null)
-
-// 途经点
-const waypoints = ref([])
-let waypointIdCounter = 0
-
-// 路线信息
-const routeInfo = ref(null)
-
-// 搜索相关
-let localSearch = null
-let geocoder = null
-
-// 计算属性：是否可以开始导航
-const canNavigate = computed(() => {
-  return startPoint.value && destinationPoint.value
+const router = useRouter()
+const loading = ref(false)
+const rooms = ref([])
+const recommendedIds = ref([])
+const backendAvailable = ref(true)
+const locations = ref([])
+const locating = ref(false)
+const userPos = ref(null)
+const nearestLocation = ref(null)
+const nearestRooms = ref([])
+const nearestDistanceKm = ref(0)
+const selectedLocationId = ref(null)
+const activeLocation = computed(() => {
+  if (selectedLocationId.value) return getLocationById(selectedLocationId.value)
+  return nearestLocation.value
+})
+const activeDistanceKm = computed(() => {
+  if (!activeLocation.value || !userPos.value || typeof activeLocation.value.latitude !== 'number' || typeof activeLocation.value.longitude !== 'number') {
+    return null
+  }
+  return haversine(userPos.value.lat, userPos.value.lng, activeLocation.value.latitude, activeLocation.value.longitude)
 })
 
-// 获取位置列表
-const fetchLocationList = async () => {
+const locationOptions = computed(() => {
+  const list = (locations.value || []).map(l => {
+    const distanceKm = userPos.value && typeof l.latitude === 'number' && typeof l.longitude === 'number'
+      ? haversine(userPos.value.lat, userPos.value.lng, l.latitude, l.longitude)
+      : null
+    return { ...l, distanceKm }
+  })
+  if (userPos.value) {
+    list.sort((a,b) => (a.distanceKm ?? Number.POSITIVE_INFINITY) - (b.distanceKm ?? Number.POSITIVE_INFINITY))
+  }
+  return list
+})
+
+const GEO_CACHE_KEY = 'yxly:userGeo'
+const GEO_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+
+const reload = () => loadRecommendations()
+
+const findSingleRoomTypeId = async () => {
   try {
-    const res = await getActiveLocationList()
-    if (res.data) {
-      locationList.value = res.data || []
-      
-      // 加载地图标记
-      setTimeout(() => {
-        loadMapMarkers()
-      }, 100)
-    }
-  } catch (error) {
-    console.error('获取位置列表失败:', error)
+    const res = await getUserRoomTypes()
+    const list = res.data || []
+    const single = list.find(t => (t.typeName || '').includes('单人'))
+    return single ? single.id : null
+  } catch (e) {
+    return null
   }
 }
 
-// 初始化地图
-const initUserMap = async () => {
-  // 确保百度地图API已加载
-  if (!window.BMapGL) {
-    try {
-      await loadBaiduMapScript()
-    } catch (error) {
-      console.error('地图API加载失败:', error)
-      return
-    }
+const loadLocations = async () => {
+  try {
+    const res = await getUserLocations()
+    locations.value = res.data || []
+  } catch (e) {
+    locations.value = []
   }
-  
-  nextTick(() => {
-    if (!window.BMapGL || userMap) {
-      return
+}
+
+const getLocationById = (id) => locations.value.find(l => l.id === id)
+
+const toRad = (v) => (v * Math.PI) / 180
+const haversine = (lat1, lng1, lat2, lng2) => {
+  const R = 6371
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
+const updateRoomDistances = () => {
+  if (!userPos.value || rooms.value.length === 0 || locations.value.length === 0) return
+  rooms.value.forEach(r => {
+    const loc = getLocationById(r.locationId)
+    if (loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+      r.distanceKm = haversine(userPos.value.lat, userPos.value.lng, loc.latitude, loc.longitude)
+    } else {
+      r.distanceKm = null
     }
-    
-    // 创建地图实例
-    userMap = new window.BMapGL.Map('user-home-map')
-    
-    // 默认中心点
-    const defaultPoint = new window.BMapGL.Point(116.404, 39.915)
-    userMap.centerAndZoom(defaultPoint, 12)
-    userMap.enableScrollWheelZoom(true)
-    
-    // 添加地图控件
-    userMap.addControl(new window.BMapGL.NavigationControl())
-    userMap.addControl(new window.BMapGL.ScaleControl())
-    
-    // 初始化路况图层
-    trafficLayer = new window.BMapGL.TrafficLayer()
-    
-    // 初始化搜索和地理编码器
-    localSearch = new window.BMapGL.LocalSearch(userMap)
-    geocoder = new window.BMapGL.Geocoder()
-    
-    // 加载位置标记
-    loadMapMarkers()
   })
 }
 
-// 加载地图标记
-const loadMapMarkers = () => {
-  if (!userMap || locationList.value.length === 0) return
-  
-  // 添加所有位置的标记
-  locationList.value.forEach(location => {
-    if (location.longitude && location.latitude && location.isActive === 1) {
-      const point = new window.BMapGL.Point(location.longitude, location.latitude)
-      const marker = new window.BMapGL.Marker(point)
-      
-      // 添加标记标签
-      const label = new window.BMapGL.Label(location.name, {
-        position: point,
-        offset: new window.BMapGL.Size(10, -20)
-      })
-      label.setStyle({
-        color: '#333',
-        fontSize: '14px',
-        border: '1px solid #409eff',
-        padding: '4px 8px',
-        borderRadius: '4px',
-        backgroundColor: '#fff',
-        fontWeight: '500'
-      })
-      marker.setLabel(label)
-      
-      // 添加点击事件显示信息窗口
-      marker.addEventListener('click', () => {
-        const infoWindow = new window.BMapGL.InfoWindow(
-          `<div style="padding: 10px;">
-            <h3 style="margin: 0 0 10px 0; color: #409eff; font-size: 16px;">${location.name}</h3>
-            <p style="margin: 5px 0; color: #666; font-size: 14px;">📍 ${location.address}</p>
-            ${location.contactPhone ? `<p style="margin: 5px 0; color: #666; font-size: 14px;">📞 ${location.contactPhone}</p>` : ''}
-            ${location.description ? `<p style="margin: 5px 0; color: #666; font-size: 14px;">${location.description}</p>` : ''}
-          </div>`,
-          {
-            width: 300,
-            height: 0,
-            title: ''
-          }
-        )
-        userMap.openInfoWindow(infoWindow, point)
-      })
-      
-      userMap.addOverlay(marker)
+const computeNearest = () => {
+  if (!userPos.value || locations.value.length === 0) return
+  let min = Infinity
+  let nearest = null
+  locations.value.forEach(l => {
+    if (typeof l.latitude === 'number' && typeof l.longitude === 'number') {
+      const d = haversine(userPos.value.lat, userPos.value.lng, l.latitude, l.longitude)
+      if (d < min) { min = d; nearest = l }
     }
   })
-  
-  // 如果有位置，自动调整视野到第一个位置
-  if (locationList.value.length > 0) {
-    const firstActive = locationList.value.find(loc => loc.isActive === 1 && loc.longitude && loc.latitude)
-    if (firstActive) {
-      const firstPoint = new window.BMapGL.Point(firstActive.longitude, firstActive.latitude)
-      userMap.centerAndZoom(firstPoint, 14)
-    }
+  nearestLocation.value = nearest || null
+  nearestDistanceKm.value = nearest ? min : 0
+  if (nearest && !selectedLocationId.value) {
+    selectedLocationId.value = nearest.id
   }
+  updateActiveRooms()
 }
 
-// 动态加载百度地图API
-const loadBaiduMapScript = () => {
-  if (window.BMapGL) {
-    return Promise.resolve()
-  }
-  
-  return new Promise((resolve, reject) => {
-    // 设置全局回调函数
-    window.onBMapCallback = () => {
-      resolve()
-      console.log('百度地图API加载成功')
-    }
-    
-    const script = document.createElement('script')
-    script.type = 'text/javascript'
-    script.src = 'https://api.map.baidu.com/api?v=1.0&type=webgl&ak=bLJae13fqsY9klnNNJxkEk0StqFRZKNK&callback=onBMapCallback'
-    script.onerror = () => {
-      reject(new Error('百度地图API加载失败'))
-    }
-    document.head.appendChild(script)
-  })
+const updateActiveRooms = () => {
+  if (!activeLocation.value) { nearestRooms.value = []; return }
+  nearestRooms.value = rooms.value.filter(r => r.locationId === activeLocation.value.id).slice(0, 3)
 }
 
-// 获取我的位置
-const getMyLocation = () => {
-  gettingLocation.value = true
-  
+const locateUser = () => {
   if (!navigator.geolocation) {
-    ElMessage.error('您的浏览器不支持定位功能')
-    gettingLocation.value = false
+    ElMessage.error('当前浏览器不支持定位')
     return
   }
-  
+  locating.value = true
   navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const point = new window.BMapGL.Point(position.coords.longitude, position.coords.latitude)
-      
-      // 逆地理编码获取地址
-      geocoder.getLocation(point, (result) => {
-        if (result) {
-          startAddress.value = result.address
-          startPoint.value = point
-          userMap.centerAndZoom(point, 15)
-          
-          // 添加起点标记
-          const marker = new window.BMapGL.Marker(point)
-          marker.setLabel(new window.BMapGL.Label('我的位置', { offset: new window.BMapGL.Size(10, -20) }))
-          userMap.addOverlay(marker)
-          
-          ElMessage.success('定位成功')
-        }
-        gettingLocation.value = false
-      })
+    (pos) => {
+      userPos.value = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+      try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ ...userPos.value, ts: Date.now() })) } catch {}
+      locating.value = false
+      updateRoomDistances()
+      computeNearest()
+      updateActiveRooms()
+      ElMessage.success('定位成功')
     },
-    (error) => {
-      console.error('定位失败:', error)
-      ElMessage.error('定位失败，请手动输入地址')
-      gettingLocation.value = false
-    }
+    (err) => {
+      locating.value = false
+      ElMessage.error('定位失败：' + (err.message || '请检查权限设置'))
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
   )
 }
 
-// 搜索地址建议
-const searchLocation = (queryString, cb) => {
-  if (!queryString) {
-    cb([])
-    return
-  }
-  
-  const options = {
-    onSearchComplete: (results) => {
-      if (localSearch.getStatus() === window.BMAP_STATUS_SUCCESS) {
-        const suggestions = []
-        for (let i = 0; i < results.getCurrentNumPois(); i++) {
-          const poi = results.getPoi(i)
-          suggestions.push({
-            value: poi.address + poi.title,
-            title: poi.title,
-            address: poi.address,
-            point: poi.point
-          })
-        }
-        cb(suggestions)
-      } else {
-        cb([])
-      }
-    }
-  }
-  
-  localSearch = new window.BMapGL.LocalSearch(userMap, options)
-  localSearch.search(queryString)
-}
-
-// 选择起点
-const handleStartSelect = (item) => {
-  startAddress.value = item.value
-  startPoint.value = item.point
-  userMap.centerAndZoom(item.point, 15)
-}
-
-// 选择终点
-const handleDestinationSelect = (locationId) => {
-  const location = locationList.value.find(loc => loc.id === locationId)
-  if (location) {
-    destinationPoint.value = new window.BMapGL.Point(location.longitude, location.latitude)
-    userMap.centerAndZoom(destinationPoint.value, 14)
-  }
-}
-
-// 添加途经点
-const addWaypoint = () => {
-  if (waypoints.value.length >= 10) {
-    ElMessage.warning('最多支持10个途经点')
-    return
-  }
-  
-  waypoints.value.push({
-    id: ++waypointIdCounter,
-    address: '',
-    point: null
-  })
-}
-
-// 移除途经点
-const removeWaypoint = (index) => {
-  waypoints.value.splice(index, 1)
-}
-
-// 选择途经点
-const handleWaypointSelect = (index, item) => {
-  waypoints.value[index].address = item.value
-  waypoints.value[index].point = item.point
-}
-
-// 途经点重新排序
-const handleWaypointReorder = () => {
-  // 拖拽完成后，如果已有路线则重新计算
-  if (routeInfo.value) {
-    ElMessage.info('途经点已调整，请重新计算路线')
-  }
-}
-
-// 切换路况显示
-const toggleTraffic = () => {
-  if (!trafficLayer) return
-  
-  if (showTraffic.value) {
-    userMap.removeOverlay(trafficLayer)
-    ElMessage.info('已关闭路况显示')
-  } else {
-    userMap.addOverlay(trafficLayer)
-    ElMessage.success('已开启路况显示')
-  }
-  
-  showTraffic.value = !showTraffic.value
-}
-
-// 切换导航方式
-const handleNavModeChange = () => {
-  if (routeInfo.value) {
-    ElMessage.info('导航方式已切换，请重新计算路线')
-    clearRoute()
-  }
-}
-
-// 开始导航
-const startNavigation = async () => {
-  if (!startPoint.value || !destinationPoint.value) {
-    ElMessage.warning('请选择起点和终点')
-    return
-  }
-  
-  console.log('开始导航:')
-  console.log('- 起点:', startPoint.value)
-  console.log('- 终点:', destinationPoint.value)
-  console.log('- 导航方式:', navMode.value)
-  console.log('- 途经点数量:', waypoints.value.length)
-  
-  calculating.value = true
-  
+const tryRestoreUserLocation = () => {
   try {
-    // 清除之前的路线
-    if (currentRoute) {
-      userMap.removeOverlay(currentRoute)
+    const raw = localStorage.getItem(GEO_CACHE_KEY)
+    if (!raw) return
+    const data = JSON.parse(raw)
+    if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
+      if (!data.ts || Date.now() - data.ts < GEO_CACHE_TTL_MS) {
+        userPos.value = { lat: data.lat, lng: data.lng }
+      } else {
+        localStorage.removeItem(GEO_CACHE_KEY)
+      }
     }
-    
-    // 准备途经点数组
-    const waypointArray = waypoints.value
-      .filter(wp => wp.point)
-      .map(wp => wp.point)
-    
-    console.log('有效途经点数量:', waypointArray.length)
-    
-    // 根据导航方式选择不同的路线规划
-    switch (navMode.value) {
-      case 'driving':
-        await calculateDrivingRoute(waypointArray)
-        break
-      case 'walking':
-        await calculateWalkingRoute(waypointArray)
-        break
-      case 'transit':
-        await calculateTransitRoute(waypointArray)
-        break
-      case 'riding':
-        await calculateRidingRoute(waypointArray)
-        break
+  } catch {}
+}
+
+const clearUserLocation = () => {
+  userPos.value = null
+  try { localStorage.removeItem(GEO_CACHE_KEY) } catch {}
+  nearestLocation.value = null
+  nearestRooms.value = []
+  nearestDistanceKm.value = 0
+  selectedLocationId.value = null
+}
+
+const normalizeRoom = (room) => {
+  if (room.images && typeof room.images === 'string') {
+    try {
+      const imageArray = JSON.parse(room.images)
+      room.imageList = imageArray
+      room.currentImage = imageArray?.[0] || null
+    } catch {
+      room.imageList = []
+      room.currentImage = null
     }
+  } else {
+    room.imageList = Array.isArray(room.images) ? room.images : []
+    room.currentImage = room.images?.[0] || null
+  }
+  room.price = room.currentPrice || room.basePrice || 0
+  return room
+}
+
+const safeGetHomeRecommendations = async () => {
+  try {
+    const resp = await fetch('/api/v1/super-admin/home/recommendations', { method: 'GET' })
+    backendAvailable.value = resp.ok
+    if (!resp.ok) {
+      return []
+    }
+    const json = await resp.json()
+    // 兼容返回结构 { code, data }
+    if (Array.isArray(json)) return json
+    if (Array.isArray(json?.data)) return json.data
+    return []
+  } catch {
+    backendAvailable.value = false
+    return []
+  }
+}
+
+const loadRecommendations = async () => {
+  try {
+    loading.value = true
+    await loadLocations()
+    // 先读取后端配置的推荐ID，若未配置则不展示任何推荐
+    recommendedIds.value = await safeGetHomeRecommendations()
+    if (!recommendedIds.value || recommendedIds.value.length === 0) {
+      rooms.value = []
+      return
+    }
+    // 拉取全部房源并按推荐ID过滤
+    let current = 1
+    const size = 100
+    let all = []
+    while (true) {
+      const res = await getAvailableRooms({ current, size })
+      const data = res.data || { records: [], current, pages: current }
+      const batch = (data.records || []).map(normalizeRoom)
+      all.push(...batch)
+      if (data.current >= data.pages) break
+      current = data.current + 1
+    }
+    let filtered = all.filter(r => recommendedIds.value.includes(r.id))
+    filtered.sort((a,b) => {
+      const ta = new Date(a.recommendTime || a.updateTime || a.update_time || 0).getTime()
+      const tb = new Date(b.recommendTime || b.updateTime || b.update_time || 0).getTime()
+      return tb - ta
+    })
+    rooms.value = filtered
+    updateRoomDistances()
+    computeNearest()
   } catch (error) {
-    console.error('路线计算失败:', error)
-    ElMessage.error('路线计算失败: ' + (error.message || '请重试'))
+    ElMessage.error('加载推荐房源失败')
   } finally {
-    calculating.value = false
+    loading.value = false
   }
 }
 
-// 驾车路线规划
-const calculateDrivingRoute = (waypointArray) => {
-  return new Promise((resolve, reject) => {
-    const driving = new window.BMapGL.DrivingRoute(userMap, {
-      renderOptions: {
-        map: userMap,
-        autoViewport: true
-      },
-      onSearchComplete: (results) => {
-        try {
-          const status = driving.getStatus()
-          console.log('驾车路线规划状态:', status)
-          
-          if (status === window.BMAP_STATUS_SUCCESS) {
-            const plan = results.getPlan(0)
-            
-            if (!plan) {
-              console.error('无法获取驾车路线方案')
-              ElMessage.error('无法获取驾车路线方案')
-              reject(new Error('无法获取驾车路线方案'))
-              return
-            }
-            
-            // 安全获取打车费用
-            let taxiFare = null
-            try {
-              if (typeof plan.getTaxiFare === 'function') {
-                const fare = plan.getTaxiFare()
-                if (fare && !isNaN(fare)) {
-                  taxiFare = fare.toFixed(0)
-                }
-              }
-            } catch (e) {
-              console.log('无法获取打车费用', e)
-            }
-            
-            routeInfo.value = {
-              distance: (plan.getDistance(false) / 1000).toFixed(2) + ' 公里',
-              duration: formatDuration(plan.getDuration(false)),
-              taxiFare: taxiFare
-            }
-            
-            ElMessage.success('路线规划成功')
-            resolve()
-          } else {
-            const errorMsg = getSearchStatusMessage(status)
-            console.error('驾车路线规划失败:', errorMsg)
-            ElMessage.error('驾车路线规划失败: ' + errorMsg)
-            reject(new Error(errorMsg))
-          }
-        } catch (error) {
-          console.error('驾车路线规划出错:', error)
-          ElMessage.error('驾车路线规划出错：' + error.message)
-          reject(error)
-        }
-      }
-    })
-    
-    if (waypointArray.length > 0) {
-      driving.search(startPoint.value, destinationPoint.value, {
-        waypoints: waypointArray
-      })
-    } else {
-      driving.search(startPoint.value, destinationPoint.value)
-    }
-  })
+const book = (room) => {
+  router.push({ path: `/rooms/${room.id}/book` })
+}
+const view = (room) => {
+  router.push({ path: `/rooms/${room.id}` })
 }
 
-// 计算两点之间的距离（公里）
-const calculateDistance = (point1, point2) => {
-  if (!point1 || !point2) return 0
-  
-  const distance = userMap.getDistance(point1, point2)
-  return (distance / 1000).toFixed(2) // 转换为公里
+const openNearest = () => {
+  const loc = activeLocation.value || nearestLocation.value
+  if (!loc) return
+  router.push({ path: '/rooms', query: { locationId: loc.id } })
 }
 
-// 步行路线规划
-const calculateWalkingRoute = (waypointArray) => {
-  // 检查距离是否超过20公里
-  const distance = calculateDistance(startPoint.value, destinationPoint.value)
-  console.log('起点到终点的直线距离:', distance, 'km')
-  
-  if (parseFloat(distance) > 20) {
-    ElMessage.warning({
-      message: `路途遥远（${distance}公里），不建议步行，请选择其他出行方式`,
-      duration: 5000
-    })
-    return Promise.reject(new Error('距离超过20公里，不适合步行'))
-  }
-  
-  return new Promise((resolve, reject) => {
-    const walking = new window.BMapGL.WalkingRoute(userMap, {
-      renderOptions: {
-        map: userMap,
-        autoViewport: true
-      },
-      onSearchComplete: (results) => {
-        try {
-          const status = walking.getStatus()
-          console.log('步行路线规划状态:', status)
-          
-          if (status === window.BMAP_STATUS_SUCCESS) {
-            const plan = results.getPlan(0)
-            
-            if (!plan) {
-              console.error('无法获取步行路线方案')
-              ElMessage.error('无法获取步行路线方案')
-              reject(new Error('无法获取步行路线方案'))
-              return
-            }
-            
-            routeInfo.value = {
-              distance: (plan.getDistance(false) / 1000).toFixed(2) + ' 公里',
-              duration: formatDuration(plan.getDuration(false))
-            }
-            
-            ElMessage.success('步行路线规划成功')
-            resolve()
-          } else {
-            const errorMsg = getSearchStatusMessage(status)
-            console.error('步行路线规划失败:', errorMsg)
-            ElMessage.error('步行路线规划失败: ' + errorMsg)
-            reject(new Error(errorMsg))
-          }
-        } catch (error) {
-          console.error('步行路线规划出错:', error)
-          ElMessage.error('步行路线规划出错：' + error.message)
-          reject(error)
-        }
-      }
-    })
-    
-    walking.search(startPoint.value, destinationPoint.value)
-  })
-}
+onMounted(() => {
+  tryRestoreUserLocation()
+  loadRecommendations()
+})
 
-// 公交路线规划
-const calculateTransitRoute = (waypointArray) => {
-  return new Promise((resolve, reject) => {
-    const transit = new window.BMapGL.TransitRoute(userMap, {
-      renderOptions: {
-        map: userMap,
-        autoViewport: true
-      },
-      onSearchComplete: (results) => {
-        try {
-          if (transit.getStatus() === window.BMAP_STATUS_SUCCESS) {
-            const plan = results.getPlan(0)
-            
-            if (!plan) {
-              console.error('无法获取公交路线方案')
-              ElMessage.error('无法获取公交路线方案')
-              reject(new Error('无法获取公交路线方案'))
-              return
-            }
-            
-            routeInfo.value = {
-              distance: (plan.getDistance(false) / 1000).toFixed(2) + ' 公里',
-              duration: formatDuration(plan.getDuration(false))
-            }
-            
-            ElMessage.success('公交路线规划成功')
-            resolve()
-          } else {
-            const errorMsg = getSearchStatusMessage(transit.getStatus())
-            console.error('公交路线规划失败:', errorMsg)
-            ElMessage.error('公交路线规划失败: ' + errorMsg)
-            reject(new Error(errorMsg))
-          }
-        } catch (error) {
-          console.error('公交路线规划出错:', error)
-          ElMessage.error('公交路线规划出错：' + error.message)
-          reject(error)
-        }
-      }
-    })
-    
-    transit.search(startPoint.value, destinationPoint.value)
-  })
-}
-
-// 骑行路线规划
-const calculateRidingRoute = (waypointArray) => {
-  // 检查距离是否超过50公里
-  const distance = calculateDistance(startPoint.value, destinationPoint.value)
-  console.log('起点到终点的直线距离:', distance, 'km')
-  
-  if (parseFloat(distance) > 50) {
-    ElMessage.warning({
-      message: `路途遥远（${distance}公里），不建议骑行，请选择其他出行方式`,
-      duration: 5000
-    })
-    return Promise.reject(new Error('距离超过50公里，不适合骑行'))
-  }
-  
-  return new Promise((resolve, reject) => {
-    const riding = new window.BMapGL.RidingRoute(userMap, {
-      renderOptions: {
-        map: userMap,
-        autoViewport: true
-      },
-      onSearchComplete: (results) => {
-        try {
-          if (riding.getStatus() === window.BMAP_STATUS_SUCCESS) {
-            const plan = results.getPlan(0)
-            
-            routeInfo.value = {
-              distance: (plan.getDistance(false) / 1000).toFixed(2) + ' 公里',
-              duration: formatDuration(plan.getDuration(false))
-            }
-            
-            ElMessage.success('骑行路线规划成功')
-            resolve()
-          } else {
-            ElMessage.error('骑行路线规划失败')
-            reject(new Error('骑行路线规划失败'))
-          }
-        } catch (error) {
-          console.error('骑行路线规划出错:', error)
-          ElMessage.error('骑行路线规划出错：' + error.message)
-          reject(error)
-        }
-      }
-    })
-    
-    riding.search(startPoint.value, destinationPoint.value)
-  })
-}
-
-// 获取搜索状态消息
-const getSearchStatusMessage = (status) => {
-  const statusMap = {
-    [window.BMAP_STATUS_SUCCESS]: '成功',
-    [window.BMAP_STATUS_CITY_LIST]: '城市列表',
-    [window.BMAP_STATUS_UNKNOWN_LOCATION]: '位置不明确',
-    [window.BMAP_STATUS_UNKNOWN_ROUTE]: '找不到路线',
-    [window.BMAP_STATUS_INVALID_KEY]: 'API密钥无效',
-    [window.BMAP_STATUS_INVALID_REQUEST]: '请求无效',
-    [window.BMAP_STATUS_PERMISSION_DENIED]: '权限被拒绝',
-    [window.BMAP_STATUS_SERVICE_UNAVAILABLE]: '服务不可用',
-    [window.BMAP_STATUS_TIMEOUT]: '请求超时'
-  }
-  return statusMap[status] || `未知错误(${status})`
-}
-
-// 格式化时间
-const formatDuration = (seconds) => {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  
-  if (hours > 0) {
-    return `${hours}小时${minutes}分钟`
-  }
-  return `${minutes}分钟`
-}
-
-// 清除路线
-const clearRoute = () => {
-  routeInfo.value = null
-  
-  if (currentRoute) {
-    userMap.removeOverlay(currentRoute)
-    currentRoute = null
-  }
-  
-  // 清除地图上的路线渲染
-  userMap.clearOverlays()
-  
-  // 重新加载位置标记
-  loadMapMarkers()
-  
-  ElMessage.info('路线已清除')
-}
-
-// 页面加载时初始化
-onMounted(async () => {
-  await loadBaiduMapScript()
-  await fetchLocationList()
-  setTimeout(() => {
-    initUserMap()
-  }, 500)
+watch(selectedLocationId, () => {
+  updateActiveRooms()
 })
 </script>
 
 <style lang="scss" scoped>
 .home-container {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20px;
-  
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  padding: 32px 20px;
+
   .header {
-    text-align: center;
-    margin-bottom: 30px;
+    display: none;
+  }
+}
+
+.geo-section {
+  max-width: 1400px;
+  margin: 0 auto 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+  
+  .geo-header { h2 { margin:0 0 8px; font-size:28px; color:#303133; font-weight: 600; } .desc { margin:0; color:#909399; font-size: 16px; } }
+  .geo-actions { display:flex; align-items:center; gap:16px; margin-top:16px; .status { color:#606266; font-size: 15px; } .warn { color:#909399; } }
+  .nearest-card { margin-top:16px; display:flex; gap:16px; align-items:flex-start; }
+  .nearest-info { flex: 1; h3{ margin:0 0 6px; } .distance{ color:#409eff; margin:0 0 8px; } }
+  .nearest-info .distance.warn{ color:#999; }
+  .nearest-info .location-row{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .nearest-info .location-row .label{ color:#606266; }
+  .nearest-info .location-select{ width:240px; flex:0 0 240px; }
+  .nearest-info .coords{ color:#909399; font-size:12px; margin-bottom:8px; }
+  .nearest-rooms { display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:16px; flex: 2; }
+  .mini-card { display:flex; gap:12px; background:#f9fafb; border:1px solid #eef2f7; border-radius:10px; padding:14px; transition: all 0.3s ease; }
+  .mini-card:hover { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); transform: translateY(-2px); }
+  .mini-img { width:120px; height:100px; overflow:hidden; border-radius:8px; background:#f5f7fa; flex-shrink: 0; }
+  .mini-img .el-image { width:100%; height:100%; }
+  .mini-content { flex:1; .title{ font-weight:600; font-size: 16px; margin-bottom: 6px; } .meta{ color:#909399; font-size:13px; margin:4px 0 10px; } }
+}
+
+.recommend-section {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+
+  .recommend-header {
+    h2 { margin: 0 0 10px; font-size: 28px; color: #303133; font-weight: 600; }
+    .desc { margin: 0 0 24px; color: #909399; font-size: 16px; }
+  }
+
+  .loading-container { padding: 20px; }
+  .empty-container { padding: 40px 0; text-align: center; }
+
+  .rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 24px;
+  }
+
+  .room-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
     
-    .title {
-      color: #409eff;
-      font-size: 36px;
-      margin: 0 0 10px 0;
+    &:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      transform: translateY(-4px);
     }
-    
-    .subtitle {
-      color: #666;
-      font-size: 16px;
-      margin: 0;
+
+    .room-image { height: 240px; background:#f5f7fa; }
+    .room-img { width:100%; height:100%; }
+    .image-placeholder { height:100%; display:flex; align-items:center; justify-content:center; color:#909399; flex-direction:column; }
+
+    .room-content { padding: 20px; display:flex; flex-direction:column; gap:14px; }
+    .room-info {
+      h3 { margin:0 0 8px; font-size:20px; color:#303133; font-weight: 600; }
+      .room-location { display:flex; align-items:center; gap:4px; font-size:14px; color:#409eff; margin-bottom:8px; }
+      .room-desc { font-size:15px; color:#606266; line-height: 1.6; margin-bottom: 8px; }
+      .room-details { display:flex; gap:16px; font-size:14px; color:#909399; }
     }
+    .room-actions { display:flex; justify-content:space-between; align-items:center; }
+    .price-info { .price{ color:#e6a23c; font-weight:700; font-size:28px; } .unit{ color:#909399; margin-left:4px; font-size: 16px; } }
+    .action-buttons { display:flex; gap:8px; }
+  }
+}
+
+@media (max-width: 768px) {
+  .home-container { padding: 12px; }
+  .geo-section { padding: 16px; }
+  .geo-header h2 { font-size: 22px; }
+  .recommend-section { padding: 16px; }
+  .recommend-header h2 { font-size: 24px; }
+  .rooms-grid { grid-template-columns: 1fr; gap: 16px; }
+  .nearest-rooms { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 1600px) {
+  .geo-section {
+    max-width: 1600px;
   }
   
-  .map-navigation-wrapper {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: flex;
-    gap: 20px;
-    
-    .map-section {
-      flex: 1;
-      position: relative;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-      height: 700px;
-      
-      .map-container {
-        width: 100%;
-        height: 100%;
-      }
-      
-      .map-controls {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        z-index: 1000;
-      }
-    }
-    
-    .navigation-panel {
-      width: 400px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      height: 700px;
-      overflow-y: auto;
-      
-      .panel-header {
-        margin-bottom: 20px;
-        
-        h3 {
-          margin: 0;
-          font-size: 18px;
-          color: #303133;
-        }
-      }
-      
-      .nav-mode-tabs {
-        margin-bottom: 20px;
-        
-        :deep(.el-radio-group) {
-          display: flex;
-          width: 100%;
-          
-          .el-radio-button {
-            flex: 1;
-            
-            .el-radio-button__inner {
-              width: 100%;
-            }
-          }
-        }
-      }
-      
-      .route-point {
-        margin-bottom: 15px;
-        
-        .point-label {
-          font-size: 14px;
-          font-weight: 500;
-          margin-bottom: 8px;
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          
-          &.start-label {
-            color: #67c23a;
-          }
-          
-          &.end-label {
-            color: #f56c6c;
-          }
-          
-          &.waypoint-label {
-            color: #409eff;
-          }
-        }
-      }
-      
-      .waypoints-section {
-        margin: 15px 0;
-        
-        .waypoint-item {
-          margin-bottom: 10px;
-          
-          .waypoint-input-group {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-          }
-        }
-      }
-      
-      .route-info {
-        margin-top: 20px;
-        
-        .info-item {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 10px;
-          font-size: 14px;
-          color: #606266;
-          
-          .el-icon {
-            color: #409eff;
-          }
-        }
-      }
-    }
+  .recommend-section {
+    max-width: 1600px;
+  }
+  
+  .rooms-grid {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 28px;
+  }
+  
+  .room-card {
+    .room-image { height: 260px; }
+    .room-content { padding: 24px; }
+    .room-info h3 { font-size: 22px; }
+    .price-info .price { font-size: 30px; }
   }
 }
 </style>

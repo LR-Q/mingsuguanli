@@ -131,3 +131,20 @@ export const auditWithdraw = (data) => {
     data
   })
 }
+
+// 首页推荐房源 - 获取
+export const getHomeRecommendations = () => {
+  return request({
+    url: '/api/v1/super-admin/home/recommendations',
+    method: 'get'
+  })
+}
+
+// 首页推荐房源 - 保存（通常仅超管使用，前端仍提供以便统一调用）
+export const saveHomeRecommendations = (roomIds) => {
+  return request({
+    url: '/api/v1/super-admin/home/recommendations',
+    method: 'put',
+    data: { roomIds }
+  })
+}

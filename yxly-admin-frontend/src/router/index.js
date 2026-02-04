@@ -79,6 +79,18 @@ const superAdminRoutes = [
           requiresSuperAdmin: true
         }
       }
+      ,
+      {
+        path: 'home-recommendations',
+        name: 'HomeRecommendations',
+        component: () => import('@/pages/super-admin/HomeRecommendations.vue'),
+        meta: {
+          title: '首页推荐',
+          icon: 'StarFilled',
+          requiresAuth: true,
+          requiresSuperAdmin: true
+        }
+      }
     ]
   }
 ]

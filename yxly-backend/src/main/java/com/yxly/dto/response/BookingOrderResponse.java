@@ -31,7 +31,10 @@ public class BookingOrderResponse {
     
     @Schema(description = "房间类型")
     private String roomType;
-    
+
+    @Schema(description = "房间首图")
+    private String roomImage;
+
     @Schema(description = "入住日期")
     private LocalDate checkInDate;
     

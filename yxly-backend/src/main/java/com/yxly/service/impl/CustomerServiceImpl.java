@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 /**
  * 客户管理服务实现
@@ -63,7 +64,7 @@ public class CustomerServiceImpl implements CustomerService {
         responsePage.setRecords(
             userPage.getRecords().stream()
                 .map(this::convertToResponse)
-                .toList()
+                .collect(Collectors.toList())
         );
         
         log.info("查询到客户数量: {}", responsePage.getTotal());

@@ -87,7 +87,7 @@
                 </div>
               </div>
 
-              <!-- 预订表单 -->
+              <!-- 预订信息（包含表单和价格明细） -->
               <div class="booking-form-section">
                 <h3>预订信息</h3>
                 <el-form :model="bookingForm" :rules="bookingRules" ref="bookingFormRef" label-width="80px">
@@ -153,6 +153,42 @@
                     />
                   </el-form-item>
                 </el-form>
+                
+                <!-- 价格明细（融合在预订信息内部） -->
+                <div class="price-summary">
+                  <h4>价格明细</h4>
+                  <div class="price-details">
+                    <div class="price-item">
+                      <span>房间单价</span>
+                      <span>￥{{ roomInfo.price }}/晚</span>
+                    </div>
+                    <div class="price-item">
+                      <span>入住天数</span>
+                      <span>{{ nights }}晚</span>
+                    </div>
+                    <div class="price-item subtotal">
+                      <span>小计</span>
+                      <span>￥{{ subtotal }}</span>
+                    </div>
+                    <div class="price-item total">
+                      <span>总计</span>
+                      <span>￥{{ totalAmount }}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="booking-actions">
+                  <el-button size="large" @click="goBack">取消</el-button>
+                  <el-button 
+                    type="primary" 
+                    size="large" 
+                    @click="submitBooking"
+                    :loading="submitting"
+                  >
+                    确认预订
+                  </el-button>
+                </div>
               </div>
 
               <!-- 房间设施（统一标签展示：仅显示已勾选的所有设施） -->
@@ -192,43 +228,6 @@
                   <div class="reviews-actions" v-if="reviewList.length < reviewPage.total">
                     <el-button :loading="reviewLoading" @click="() => { reviewPage.current++; loadRoomReviews(false) }">加载更多</el-button>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 右侧：价格明细 -->
-            <div class="right-section">
-              <div class="price-card">
-                <h3>价格明细</h3>
-                <div class="price-details">
-                  <div class="price-item">
-                    <span>房间单价</span>
-                    <span>￥{{ roomInfo.price }}/晚</span>
-                  </div>
-                  <div class="price-item">
-                    <span>入住天数</span>
-                    <span>{{ nights }}晚</span>
-                  </div>
-                  <div class="price-item subtotal">
-                    <span>小计</span>
-                    <span>￥{{ subtotal }}</span>
-                  </div>
-                  <div class="price-item total">
-                    <span>总计</span>
-                    <span>￥{{ totalAmount }}</span>
-                  </div>
-                </div>
-                
-                <div class="booking-actions">
-                  <el-button size="large" @click="goBack">取消</el-button>
-                  <el-button 
-                    type="primary" 
-                    size="large" 
-                    @click="submitBooking"
-                    :loading="submitting"
-                  >
-                    确认预订
-                  </el-button>
                 </div>
               </div>
             </div>
@@ -526,6 +525,9 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 .book-room {
+  min-height: 100vh;
+  background: #ffffff;
+  
   .container {
     max-width: 1000px;
     margin: 0 auto;
@@ -660,16 +662,20 @@ onMounted(async () => {
 
 // 主要内容区域
 .main-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 40px;
+  display: block;
   padding: 30px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 // 左侧区域
 .left-section {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  
   .room-info-section {
-    margin-bottom: 30px;
+    margin-bottom: 0;
     
     h2 {
       margin: 0 0 16px 0;
@@ -704,12 +710,15 @@ onMounted(async () => {
     }
   }
   
+  // 预订表单和价格明细并排区域（现已删除）
+  // .booking-row { }
+  
   .booking-form-section {
     background: #f8fffe;
     border: 2px solid #10b981;
     border-radius: 12px;
     padding: 24px;
-    margin: 30px 0;
+    display: block;
     
     h3 {
       margin: 0 0 20px 0;
@@ -736,10 +745,68 @@ onMounted(async () => {
         color: #333;
       }
     }
+    
+    // 价格摘要（在表单内部）
+    .price-summary {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 2px solid #d1fae5;
+      
+      h4 {
+        margin: 0 0 16px 0;
+        font-size: 18px;
+        color: #10b981;
+        font-weight: 600;
+      }
+      
+      .price-details {
+        .price-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 10px 0;
+          font-size: 15px;
+          color: #333;
+          
+          &.subtotal {
+            font-weight: 500;
+            padding-top: 12px;
+            margin-top: 8px;
+            border-top: 1px solid #d1fae5;
+          }
+          
+          &.total {
+            font-size: 22px;
+            font-weight: 700;
+            color: #e74c3c;
+            padding-top: 12px;
+            margin-top: 8px;
+            border-top: 2px solid #10b981;
+          }
+        }
+      }
+    }
+    
+    // 操作按钮
+    .booking-actions {
+      margin-top: 24px;
+      display: flex;
+      gap: 12px;
+      
+      .el-button {
+        flex: 1;
+        height: 44px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+    }
   }
   
+  // 价格卡片样式（现已不需要，保留作为后用）
+  // .price-card { }
+  
   .room-facilities-section {
-    margin-top: 30px;
+    margin-top: 0;
     
     h4 {
       margin: 0 0 20px 0;
@@ -757,7 +824,7 @@ onMounted(async () => {
   }
 
   .room-reviews-section {
-    margin-top: 24px;
+    margin-top: 0;
     h4 {
       margin: 0 0 16px 0;
       font-size: 18px;
@@ -794,6 +861,9 @@ onMounted(async () => {
     padding: 24px;
     position: sticky;
     top: 20px;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
     
     h3 {
       margin: 0 0 20px 0;
@@ -803,6 +873,10 @@ onMounted(async () => {
     }
     
     .price-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      
       .price-item {
         display: flex;
         justify-content: space-between;

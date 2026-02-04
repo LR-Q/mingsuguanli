@@ -76,6 +76,12 @@ spring:
       max-file-size: 10MB
       max-request-size: 100MB
   
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    table: flyway_schema_history
+
   # Jackson配置
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss

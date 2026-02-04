@@ -263,6 +263,60 @@ public class RoomServiceImpl implements RoomService {
             return response;
         }).collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void setRoomRecommended(Long id, Integer recommended) {
+        log.info("设置房间推荐状态: id={}, recommended={}", id, recommended);
+        Long exists = roomInfoMapper.selectCount(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<RoomInfo>()
+                        .eq(RoomInfo::getId, id)
+                        .eq(RoomInfo::getDeleted, 0)
+        );
+        if (exists == null || exists == 0L) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "房间不存在");
+        }
+        try {
+            int result = roomInfoMapper.updateRecommendStatus(id, recommended != null ? recommended : 0);
+            if (result <= 0) {
+                throw new BusinessException(ResultCode.INTERNAL_ERROR, "更新推荐状态失败");
+            }
+        } catch (Exception e) {
+            log.warn("更新推荐状态（含推荐时间）失败，尝试兼容路径: {}", e.getMessage());
+            int fallback = roomInfoMapper.updateRecommendStatusNoTime(id, recommended != null ? recommended : 0);
+            if (fallback <= 0) {
+                throw new BusinessException(ResultCode.INTERNAL_ERROR, "更新推荐状态失败(兼容路径)");
+            }
+        }
+    }
+
+    @Override
+    public java.util.List<Long> getRecommendedRoomIds() {
+        return roomInfoMapper.selectRecommendedIds();
+    }
+
+    @Override
+    public IPage<RoomResponse> getRecommendedRoomsPage(Long current, Long size) {
+        Page<RoomResponse> page = new Page<>(current, size);
+        return roomInfoMapper.selectRecommendedRooms(page);
+    }
+
+    @Override
+    public IPage<RoomResponse> getRoomPageByLocations(Long current, Long size, java.util.List<Long> locationIds,
+                                                      String roomNumber, Long roomTypeId, Integer status, Integer floorNumber) {
+        Page<RoomResponse> page = new Page<>(current, size);
+        return roomInfoMapper.selectRoomPageByLocations(page, locationIds, roomNumber, roomTypeId, status, floorNumber);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
+    public void setRecommendations(java.util.List<Long> roomIds) {
+        log.info("批量设置首页推荐，数量={}", roomIds != null ? roomIds.size() : 0);
+        // 先清空所有推荐
+        roomInfoMapper.clearAllRecommendations();
+        // 再设置选中的推荐
+        if (roomIds != null && !roomIds.isEmpty()) {
+            roomInfoMapper.setRecommendations(roomIds);
+        }
+    }
 }
-
-

@@ -65,7 +65,8 @@
               :min="1"
               :max="50"
               clearable
-              style="width: 120px;"
+              controls-position="right"
+              style="width: 180px;"
             />
           </el-form-item>
           <el-form-item label="状态">
@@ -90,7 +91,7 @@
       </div>
       
       <!-- 房间列表 -->
-      <el-table :data="roomList" style="width: 100%" v-loading="loading">
+      <el-table :data="roomList" style="width: 100%" v-loading="loading" table-layout="fixed">
         <el-table-column prop="roomNumber" label="房间号" width="100" />
         <el-table-column prop="locationName" label="所属民宿" width="140">
           <template #default="{ row }">
@@ -114,7 +115,7 @@
         </el-table-column>
         <el-table-column prop="maxGuests" label="容纳人数" width="100" />
         <el-table-column prop="area" label="面积(㎡)" width="100" />
-        <el-table-column prop="status" label="状态" width="160">
+        <el-table-column prop="status" label="状态" min-width="160">
           <template #default="{ row }">
             <el-select
               v-model="row.status"
@@ -140,7 +141,18 @@
             </el-select>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="260" fixed="right">
+        <el-table-column v-if="roleCode === 'SUPER_ADMIN'" label="推荐" width="120">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.isRecommendedSwitch"
+              :active-value="true"
+              :inactive-value="false"
+              :disabled="recommendLoading[row.id]"
+              @change="val => handleRecommendChange(row, val)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" min-width="260">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleView(row)">
               查看
@@ -156,6 +168,13 @@
               复制
             </el-button>
             <el-button 
+              type="info" 
+              size="small" 
+              @click="openReviews(row)"
+            >
+              评论
+            </el-button>
+            <el-button 
               type="danger" 
               size="small" 
               @click="handleDelete(row)"
@@ -165,6 +184,36 @@
           </template>
         </el-table-column>
       </el-table>
+      
+      <el-dialog v-model="reviewDialogVisible" title="房间评论" width="720px">
+        <div v-if="currentReviewRoom" class="review-header">
+          <el-tag type="primary" effect="plain">房间号：{{ currentReviewRoom.roomNumber }}</el-tag>
+          <el-tag type="info" effect="plain" style="margin-left:8px;">房型：{{ currentReviewRoom.roomTypeName }}</el-tag>
+          <el-tag type="success" effect="plain" style="margin-left:8px;">民宿：{{ currentReviewRoom.locationName }}</el-tag>
+        </div>
+        <el-table :data="reviewList" v-loading="reviewLoading" style="width:100%;margin-top:8px;">
+          <el-table-column prop="userDisplayName" label="用户" width="160" />
+          <el-table-column label="评分" width="120">
+            <template #default="{ row }">
+              <el-rate v-model="rateTmp[row.id]" :max="5" disabled />
+            </template>
+          </el-table-column>
+          <el-table-column prop="content" label="内容" min-width="260" />
+          <el-table-column prop="createTime" label="时间" width="180" />
+        </el-table>
+        <div class="pagination-wrapper">
+          <el-pagination
+            v-model:current-page="reviewPage"
+            v-model:page-size="reviewPageSize"
+            :total="reviewTotal"
+            layout="total, prev, pager, next"
+            @current-change="loadReviews"
+          />
+        </div>
+        <template #footer>
+          <el-button @click="reviewDialogVisible=false">关闭</el-button>
+        </template>
+      </el-dialog>
       
       <!-- 分页 -->
       <div class="pagination-wrapper">
@@ -187,9 +236,13 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { getRoomPage, deleteRoom, getRoomTypes, getAdminLocations, updateRoomStatus } from '@/api/modules/room'
+import { getRoomPage, deleteRoom, getRoomTypes, getAdminLocations, updateRoomStatus, updateRoom, getRoomReviews } from '@/api/modules/room'
+import { setRoomRecommended } from '@/api/modules/superAdmin'
+import { useAuthStore } from '@/stores/modules/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
+const roleCode = authStore.userInfo?.roleCode
 
 // 响应式数据
 const loading = ref(false)
@@ -218,6 +271,16 @@ const statusOptions = [
 ]
 const statusLoading = reactive({})
 const statusSnapshot = reactive({})
+const recommendLoading = reactive({})
+// 评论对话框
+const reviewDialogVisible = ref(false)
+const currentReviewRoom = ref(null)
+const reviewList = ref([])
+const reviewLoading = ref(false)
+const reviewPage = ref(1)
+const reviewPageSize = ref(10)
+const reviewTotal = ref(0)
+const rateTmp = reactive({})
 
 // 方法
 const getRoomTypeName = (roomTypeId) => {
@@ -329,7 +392,10 @@ const loadRoomList = async () => {
     const response = await getRoomPage(params)
     // 响应拦截器已经处理了成功响应，直接使用data
     const records = response.data?.records ?? []
-    roomList.value = records
+    roomList.value = records.map(r => ({
+      ...r,
+      isRecommendedSwitch: r.isRecommended === 1 || r.recommended === 1 || r.is_recommended === 1
+    }))
     total.value = response.data?.total ?? 0
     
     // 更新状态快照和加载状态
@@ -347,6 +413,30 @@ const loadRoomList = async () => {
   }
 }
 
+const openReviews = (row) => {
+  currentReviewRoom.value = row
+  reviewDialogVisible.value = true
+  reviewPage.value = 1
+  loadReviews()
+}
+
+const loadReviews = async () => {
+  if (!currentReviewRoom.value) return
+  reviewLoading.value = true
+  try {
+    const res = await getRoomReviews(currentReviewRoom.value.id, { current: reviewPage.value, size: reviewPageSize.value })
+    const page = res.data || { records: [], total: 0 }
+    reviewList.value = (page.records || []).map(r => {
+      rateTmp[r.id] = r.rating
+      return r
+    })
+    reviewTotal.value = page.total || 0
+  } catch (e) {
+    ElMessage.error('加载评论失败')
+  } finally {
+    reviewLoading.value = false
+  }
+}
 const loadRoomTypes = async () => {
   try {
     const response = await getRoomTypes()
@@ -411,5 +501,37 @@ onMounted(() => {
     margin-top: 20px;
     text-align: center;
   }
+
+  @media (min-width: 1440px) {
+    .search-area .search-form {
+      gap: 14px 28px;
+    }
+    :deep(.el-input-number) {
+      width: 200px;
+    }
+  }
 }
 </style>
+const handleRecommendChange = async (row, val) => {
+  const prev = !val
+  try {
+    recommendLoading[row.id] = true
+    // 优先尝试管理员更新接口（很多后端已支持），同时兼容命名
+    await updateRoom(row.id, { isRecommended: val ? 1 : 0, recommended: val ? 1 : 0 })
+    ElMessage.success(val ? '已设为首页推荐' : '已取消首页推荐')
+  } catch (e) {
+    try {
+      await setRoomRecommended(row.id, val ? 1 : 0)
+      ElMessage.success(val ? '已设为首页推荐' : '已取消首页推荐')
+    } catch (err) {
+      row.isRecommendedSwitch = prev
+      if (err.response?.data?.message) {
+        ElMessage.error(err.response.data.message)
+      } else {
+        ElMessage.error('设置推荐失败，请检查后端接口')
+      }
+    }
+  } finally {
+    recommendLoading[row.id] = false
+  }
+}

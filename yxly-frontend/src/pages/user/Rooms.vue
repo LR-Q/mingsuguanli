@@ -97,6 +97,15 @@
           </div>
         </div>
       </div>
+      
+      <div class="location-filter-tip" v-if="searchForm.locationId">
+        <el-alert type="info" :closable="false" show-icon title="已按民宿过滤">
+          <template #description>
+            当前显示该民宿的全部房源
+            <el-button type="text" @click="clearLocationFilter" style="margin-left:8px">清除筛选</el-button>
+          </template>
+        </el-alert>
+      </div>
 
       <!-- 房间列表 -->
       <div class="rooms-section">
@@ -258,7 +267,7 @@ const currentPage = ref(1)
 const pageSize = ref(6)
 
 const searchForm = reactive({
-  locationId: null,
+  locationId: route.query.locationId ? Number(route.query.locationId) : null,
   checkIn: route.query.checkIn || '',
   checkOut: route.query.checkOut || '',
   guests: route.query.guests || null, // 默认不筛选入住人数
@@ -345,6 +354,61 @@ const loadRooms = async (isLoadMore = false) => {
   } catch (error) {
     console.error('加载房间列表失败:', error)
     ElMessage.error('加载房间列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadRoomsForLocationAll = async () => {
+  try {
+    if (!searchForm.locationId) { await loadRooms(); return }
+    loading.value = true
+    const size = 50
+    let current = 1
+    let all = []
+    while (true) {
+      const response = await getAvailableRooms({ current, size, locationId: searchForm.locationId })
+      const data = response.data
+      all.push(...(data.records || []))
+      if (data.current >= data.pages) break
+      current = data.current + 1
+    }
+    rooms.value = all
+    total.value = all.length
+    currentPage.value = 1
+    hasMore.value = false
+    rooms.value.forEach(room => {
+      if (room.facilities && typeof room.facilities === 'string') {
+        try { room.facilities = JSON.parse(room.facilities) } catch { room.facilities = [] }
+      }
+      if (room.images && typeof room.images === 'string') {
+        try {
+          const imageArray = JSON.parse(room.images)
+          room.imageList = imageArray
+          room.currentImageIndex = 0
+          room.currentImage = imageArray.length > 0 ? imageArray[0] : null
+          room.showControls = false
+        } catch {
+          room.imageList = []
+          room.currentImageIndex = 0
+          room.currentImage = null
+          room.showControls = false
+        }
+      } else {
+        room.imageList = []
+        room.currentImageIndex = 0
+        room.currentImage = null
+        room.showControls = false
+      }
+      room.name = room.roomTypeName || `${room.roomNumber}号房间`
+      room.price = room.currentPrice || room.basePrice || 0
+      room.isFavorite = false
+      room.favoriteLoading = false
+    })
+    await checkRoomsFavoriteStatus()
+  } catch (error) {
+    console.error('加载民宿全部房源失败:', error)
+    ElMessage.error('加载民宿房源失败')
   } finally {
     loading.value = false
   }
@@ -618,7 +682,11 @@ onMounted(() => {
   // 初始化加载
   loadLocations()
   loadRoomTypes()
-  loadRooms()
+  if (searchForm.locationId) {
+    loadRoomsForLocationAll()
+  } else {
+    loadRooms()
+  }
 })
 
 // 同步和计算晚数
@@ -643,6 +711,11 @@ watch(dateRange, (val) => {
     nights.value = 0
   }
 })
+
+const clearLocationFilter = () => {
+  searchForm.locationId = null
+  loadRooms()
+}
 </script>
 
 <style lang="scss" scoped>
@@ -656,24 +729,26 @@ watch(dateRange, (val) => {
     padding: 20px;
   }
   
+  .location-filter-tip { margin-bottom: 16px; }
+  
   // 顶部大标题样式移除
   
   .search-section {
     margin-bottom: 30px;
     
     .hero {
-      background: linear-gradient(135deg, #66b1ff, #409eff);
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 6px 20px rgba(64, 158, 255, 0.25);
-      color: #fff;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 0;
+      box-shadow: none;
+      color: #333;
     }
     
     .hero-inner {
       background: #ffffff;
-      border-radius: 10px;
-      padding: 20px 20px 10px;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+      border-radius: 16px;
+      padding: 28px 24px 18px;
+      box-shadow: none;
     }
     
     .hero-title {
@@ -681,7 +756,7 @@ watch(dateRange, (val) => {
       display: flex;
       justify-content: center; // 居中标题
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
       
       .title-left {
         width: 100%;
@@ -689,12 +764,13 @@ watch(dateRange, (val) => {
         h2 {
           margin: 0 0 6px 0;
           color: #303133;
-          font-size: 28px;
+          font-size: 30px;
           font-weight: 700;
         }
         p {
           margin: 0;
-          color: #909399;
+          color: #7c8fa6;
+          font-size: 14px;
         }
       }
       
@@ -709,20 +785,26 @@ watch(dateRange, (val) => {
       
       .hero-search-btn {
         height: 48px;
-        padding: 0 22px;
-        border-radius: 8px;
-        font-size: 28px; // 与标题同等大小
+        padding: 0 26px;
+        border-radius: 10px;
+        font-size: 18px;
         line-height: 48px;
         display: inline-flex;
         align-items: center;
+        background: linear-gradient(135deg, #1ea0ff 0%, #006aff 100%);
+        box-shadow: 0 8px 18px rgba(0, 106, 255, 0.35);
+        transition: transform .15s ease, box-shadow .15s ease, background .2s ease;
       }
+      .hero-search-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,106,255,.45); }
+      .hero-search-btn:active { transform: translateY(0); box-shadow: 0 6px 14px rgba(0,106,255,.35); }
     }
     
     .search-bar {
       display: grid;
       grid-template-columns: 220px minmax(420px, 1fr) 160px 180px;
-      gap: 14px;
+      gap: 16px;
       align-items: center;
+      padding-top: 8px;
     }
     
     .field {
@@ -730,7 +812,7 @@ watch(dateRange, (val) => {
       
       .label {
         font-size: 12px;
-        color: #909399;
+        color: #6f8aa5;
         margin-bottom: 6px;
       }
       
@@ -745,9 +827,37 @@ watch(dateRange, (val) => {
     }
     
     .actions { display: none; }
+    
+    /* 统一输入控件视觉风格 */
+    :deep(.el-input__wrapper),
+    :deep(.el-select__wrapper),
+    :deep(.el-date-editor) {
+      border-radius: 10px !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border: none !important;
+      transition: box-shadow .2s ease, border-color .2s ease, background-color .2s ease;
+    }
+    :deep(.el-input__wrapper:hover),
+    :deep(.el-select__wrapper:hover),
+    :deep(.el-date-editor:hover) {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    :deep(.el-input.is-focus .el-input__wrapper),
+    :deep(.el-select.is-focus .el-select__wrapper),
+    :deep(.is-active.el-date-editor) {
+      box-shadow: 0 0 0 3px rgba(30, 136, 255, 0.25);
+    }
+    /* placeholder 优化 */
+    :deep(.el-input__inner::placeholder),
+    :deep(.el-select__placeholder) {
+      color: #a6b7c8 !important;
+      font-weight: 400;
+    }
   }
   
   .rooms-section {
+    
+    .location-filter-tip { margin-bottom: 12px; }
     .loading-container {
       padding: 40px;
     }
@@ -1037,6 +1147,7 @@ watch(dateRange, (val) => {
         }
       }
     }
+    .search-section .search-bar { grid-template-columns: 1fr; }
   }
 }
 </style>

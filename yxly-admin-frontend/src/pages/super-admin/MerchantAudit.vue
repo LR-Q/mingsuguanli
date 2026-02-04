@@ -64,6 +64,12 @@
             <el-tag v-else-if="row.auditStatus === 2" type="danger" size="large" effect="plain">已拒绝</el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="启用状态" width="120" align="center">
+          <template #default="{ row }">
+            <el-tag v-if="row.status === 1" type="success" size="large" effect="plain">启用</el-tag>
+            <el-tag v-else type="info" size="large" effect="plain">禁用</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="createTime" label="申请时间" width="160">
           <template #default="{ row }">
             {{ formatDateTime(row.createTime) }}
@@ -102,6 +108,15 @@
                 @click="handleResetPassword(row)"
               >
                 重置密码
+              </el-button>
+              <el-button
+                v-if="row.auditStatus === 1"
+                :type="row.status === 1 ? 'danger' : 'success'"
+                size="small"
+                :loading="statusLoadingId === row.id"
+                @click="handleToggleStatus(row)"
+              >
+                {{ row.status === 1 ? '禁用' : '启用' }}
               </el-button>
             </div>
           </template>
@@ -235,7 +250,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getAllMerchants, auditMerchant, resetMerchantPassword } from '@/api/modules/superAdmin'
+import { getAllMerchants, auditMerchant, resetMerchantPassword, updateMerchantStatus } from '@/api/modules/superAdmin'
 import dayjs from 'dayjs'
 
 // 状态
@@ -247,6 +262,7 @@ const auditDialogVisible = ref(false)
 const detailDialogVisible = ref(false)
 const resetPasswordDialogVisible = ref(false)
 const currentMerchant = ref(null)
+const statusLoadingId = ref(null)
 
 // 审核表单
 const auditForm = ref({
@@ -358,6 +374,27 @@ const confirmResetPassword = async () => {
     ElMessage.error(error.message || '重置密码失败')
   } finally {
     submitLoading.value = false
+  }
+}
+
+// 启用/禁用商户
+const handleToggleStatus = async (row) => {
+  if (row.auditStatus !== 1) {
+    ElMessage.warning('仅已通过审核的商户可启用/禁用')
+    return
+  }
+
+  const targetStatus = row.status === 1 ? 0 : 1
+  statusLoadingId.value = row.id
+  try {
+    await updateMerchantStatus(row.id, targetStatus)
+    ElMessage.success(targetStatus === 1 ? '已启用' : '已禁用')
+    await loadMerchants()
+  } catch (error) {
+    console.error('更新商户状态失败:', error)
+    ElMessage.error(error.message || '更新失败')
+  } finally {
+    statusLoadingId.value = null
   }
 }
 

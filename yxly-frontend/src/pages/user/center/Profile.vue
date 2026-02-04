@@ -433,20 +433,32 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .profile-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+  
   .profile-card,
   .avatar-card,
   .security-card {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    border-radius: 12px;
+    border: 1px solid #e4e7ed;
+    transition: box-shadow 0.3s ease;
+    
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
     
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 4px 0;
       
       h3 {
         margin: 0;
         color: #303133;
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 600;
       }
     }
@@ -455,19 +467,30 @@ onMounted(() => {
   .avatar-section {
     display: flex;
     align-items: center;
-    gap: 32px;
+    gap: 40px;
+    padding: 20px 0;
     
     .avatar-preview {
       text-align: center;
+      
+      .el-avatar {
+        border: 4px solid #f0f2f5;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      }
     }
     
     .avatar-actions {
       flex: 1;
       
+      .el-button {
+        padding: 12px 24px;
+      }
+      
       .upload-tip {
-        margin: 8px 0 0 0;
+        margin: 12px 0 0 0;
         color: #909399;
-        font-size: 12px;
+        font-size: 13px;
+        line-height: 1.5;
       }
     }
   }
@@ -477,25 +500,31 @@ onMounted(() => {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 0;
-      border-bottom: 1px solid #ebeef5;
+      padding: 24px 0;
+      border-bottom: 1px solid #f0f2f5;
+      
+      &:first-child {
+        padding-top: 12px;
+      }
       
       &:last-child {
         border-bottom: none;
+        padding-bottom: 12px;
       }
       
       .item-info {
         h4 {
-          margin: 0 0 4px 0;
+          margin: 0 0 6px 0;
           color: #303133;
           font-size: 16px;
-          font-weight: 500;
+          font-weight: 600;
         }
         
         p {
           margin: 0;
           color: #909399;
           font-size: 14px;
+          line-height: 1.5;
         }
       }
     }
@@ -508,7 +537,44 @@ onMounted(() => {
 }
 
 :deep(.el-card__header) {
-  background: #fafafa;
-  border-bottom: 1px solid #ebeef5;
+  background: linear-gradient(to bottom, #fafbfc, #ffffff);
+  border-bottom: 1px solid #e4e7ed;
+  padding: 20px 24px;
+}
+
+:deep(.el-card__body) {
+  padding: 24px;
+}
+
+:deep(.el-form-item) {
+  margin-bottom: 24px;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px #dcdfe6 inset;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 0 0 1px #c0c4cc inset;
+  }
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #409eff inset;
+}
+
+:deep(.el-textarea__inner) {
+  border-radius: 8px;
+  border: 1px solid #dcdfe6;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: #c0c4cc;
+  }
+  
+  &:focus {
+    border-color: #409eff;
+  }
 }
 </style>

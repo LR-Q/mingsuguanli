@@ -63,6 +63,19 @@ export const resetMerchantPassword = (data) => {
 }
 
 /**
+ * 启用/禁用商户
+ * @param {number} merchantId - 商户ID
+ * @param {number} status - 状态(0:禁用 1:启用)
+ */
+export const updateMerchantStatus = (merchantId, status) => {
+  return request({
+    url: '/api/v1/super-admin/merchants/status',
+    method: 'put',
+    data: { merchantId, status }
+  })
+}
+
+/**
  * 获取充值记录（分页）
  * @param {object} params - 查询参数
  */
@@ -129,5 +142,31 @@ export const auditWithdraw = (data) => {
     url: '/api/v1/super-admin/withdraw/audit',
     method: 'post',
     data
+  })
+}
+
+// 首页推荐房源 - 获取
+export const getHomeRecommendations = () => {
+  return request({
+    url: '/api/v1/super-admin/home/recommendations',
+    method: 'get'
+  })
+}
+
+// 首页推荐房源 - 保存
+export const saveHomeRecommendations = (roomIds) => {
+  return request({
+    url: '/api/v1/super-admin/home/recommendations',
+    method: 'put',
+    data: { roomIds }
+  })
+}
+
+// 设置单个房间推荐状态（推荐字段：0未推荐，1已推荐）
+export const setRoomRecommended = (roomId, recommended) => {
+  return request({
+    url: `/api/v1/super-admin/rooms/${roomId}/recommend`,
+    method: 'put',
+    data: { recommended }
   })
 }

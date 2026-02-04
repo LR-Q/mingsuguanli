@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -114,10 +115,9 @@ public class RoomReviewServiceImpl extends ServiceImpl<RoomReviewMapper, RoomRev
                 rr.setUserAvatar(user.getAvatar());
             }
             return rr;
-        }).toList());
+        }).collect(Collectors.toList()));
 
         return resp;
     }
 }
-
 

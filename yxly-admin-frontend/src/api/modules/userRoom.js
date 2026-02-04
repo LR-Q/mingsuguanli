@@ -50,3 +50,11 @@ export function searchRooms(params) {
     params
   })
 }
+
+// 获取所有民宿位置列表（用户端）
+export function getUserLocations() {
+  return request({
+    url: '/api/v1/location/list',
+    method: 'GET'
+  })
+}

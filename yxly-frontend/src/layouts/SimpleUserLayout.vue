@@ -195,34 +195,64 @@ main {
   flex: 1;
 }
 
-/* 路由链接激活状态 */
-a.router-link-active {
-  background: rgba(2, 6, 23, 0.06);
-  color: var(--text-1);
-  border-radius: 8px;
+/* 导航链接样式优化 */
+:deep(.yx-header__link) {
+  color: #2c3e50 !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  padding: 10px 18px !important;
 }
 
-/* 用户下拉菜单触发器悬停效果 */
+:deep(.yx-header__link:hover) {
+  color: #409eff !important;
+  background: rgba(64, 158, 255, 0.1) !important;
+}
+
+/* 路由链接激活状态 */
+a.router-link-active {
+  background: rgba(64, 158, 255, 0.15) !important;
+  color: #409eff !important;
+  border-radius: 8px;
+  font-weight: 700 !important;
+}
+
+/* 用户下拉菜单触发器样式 */
+.user-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 15px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
 .user-dropdown-trigger:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(64, 158, 255, 0.1) !important;
+  transform: translateY(-1px);
 }
 
 /* 菜单内登录/注册排版 */
 .nav-auth {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  margin-left: 16px;
+  gap: 16px;
+  margin-left: 24px;
 }
 
 /* 登录相关按钮样式 */
 .login-link:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  transform: translateY(-1px);
 }
 
 .register-link:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.35) !important;
+  transform: translateY(-1px);
 }
 
 /* 下拉菜单样式 */
@@ -245,10 +275,24 @@ a.router-link-active {
   }
 }
 :root .login-link {
-  color: white; text-decoration: none; font-weight: 600; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; transition: all 0.3s;
+  color: white; 
+  text-decoration: none; 
+  font-weight: 600; 
+  font-size: 15px;
+  padding: 10px 20px; 
+  border: 2px solid rgba(255,255,255,0.4); 
+  border-radius: 8px; 
+  transition: all 0.3s;
 }
 :root .register-link {
-  color: white; text-decoration: none; font-weight: 600; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 6px; transition: all 0.3s;
+  color: white; 
+  text-decoration: none; 
+  font-weight: 600; 
+  font-size: 15px;
+  padding: 10px 20px; 
+  background: rgba(255,255,255,0.25); 
+  border-radius: 8px; 
+  transition: all 0.3s;
 }
 .logout-badge {
   background: #f56c6c; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-left: 16px;

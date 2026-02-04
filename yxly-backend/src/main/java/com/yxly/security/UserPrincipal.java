@@ -22,11 +22,11 @@ import java.util.Collections;
 public class UserPrincipal implements UserDetails {
     
     private final SysUser user;
+    private final Collection<? extends GrantedAuthority> authorities;
     
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // 这里可以根据角色ID查询具体权限，暂时使用默认权限
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        return authorities != null ? authorities : Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
     }
     
     @Override

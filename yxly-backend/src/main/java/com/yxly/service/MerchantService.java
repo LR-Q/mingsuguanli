@@ -94,4 +94,12 @@ public interface MerchantService {
      * @return 用户信息
      */
     com.yxly.entity.SysUser getUserByUsername(String username);
+
+    /**
+     * 启用/禁用商户
+     *
+     * @param merchantId 商户ID
+     * @param status     状态(0:禁用 1:启用)
+     */
+    void updateMerchantStatus(Long merchantId, Integer status);
 }

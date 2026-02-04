@@ -94,7 +94,8 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.GET, "/v1/admin/rooms/types").permitAll()  // 临时允许房型接口访问
                 .antMatchers("/v1/admin/files/**").permitAll()  // 临时允许文件上传接口访问
                 .antMatchers("/v1/upload/**").permitAll()  // 允许通用上传接口访问（身份证等）
-                .antMatchers("/v1/super-admin/**").permitAll()  // 临时允许超级管理员接口访问（商户审核等）
+                .antMatchers("/v1/super-admin/**").permitAll()  // 临时允许超级管理员接口访问
+                .antMatchers("/api/v1/super-admin/**").permitAll()  // 兼容前端代理路径
                 .antMatchers("/v1/admin/recharge/**").permitAll()  // 临时允许管理员充值管理接口访问
                 .antMatchers("/v1/admin/withdraw/**").permitAll()  // 临时允许管理员提现管理接口访问
                 .antMatchers("/v1/admin/bookings/**").permitAll()  // 临时允许管理员订单管理接口访问

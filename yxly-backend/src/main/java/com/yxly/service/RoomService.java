@@ -94,6 +94,30 @@ public interface RoomService {
      * @return 房型列表
      */
     List<RoomTypeResponse> getAllRoomTypes();
+
+    /**
+     * 设置房间首页推荐状态
+     */
+    void setRoomRecommended(Long id, Integer recommended);
+
+    /**
+     * 获取推荐房源ID列表
+     */
+    java.util.List<Long> getRecommendedRoomIds();
+
+    /**
+     * 推荐房源分页（按推荐时间倒序，仅可用）
+     */
+    IPage<RoomResponse> getRecommendedRoomsPage(Long current, Long size);
+
+    /**
+     * 按位置集合分页查询（管理员隔离）
+     */
+    IPage<RoomResponse> getRoomPageByLocations(Long current, Long size, java.util.List<Long> locationIds,
+                                               String roomNumber, Long roomTypeId, Integer status, Integer floorNumber);
+
+    /**
+     * 批量设置首页推荐
+     */
+    void setRecommendations(java.util.List<Long> roomIds);
 }
-
-

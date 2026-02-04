@@ -12,6 +12,16 @@
         <nav class="nav-menu">
           <router-link to="/home" class="nav-item">首页</router-link>
           <router-link to="/rooms" class="nav-item">房间预订</router-link>
+          <span class="divider"></span>
+          <router-link 
+            v-for="item in menuItems" 
+            :key="item.path"
+            :to="item.path" 
+            class="nav-item user-center-item"
+          >
+            <el-icon><component :is="item.icon" /></el-icon>
+            <span>{{ item.title }}</span>
+          </router-link>
         </nav>
         
         <div class="user-actions">
@@ -37,34 +47,6 @@
     </header>
 
     <div class="main-container">
-      <!-- 侧边栏导航 -->
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <el-avatar :size="60" :src="userAvatar">
-            {{ userName.charAt(0) }}
-          </el-avatar>
-          <div class="user-info">
-            <h3>{{ userName }}</h3>
-            <p class="user-email">{{ userEmail }}</p>
-          </div>
-        </div>
-        
-        <nav class="sidebar-nav">
-          <router-link 
-            v-for="item in menuItems" 
-            :key="item.path"
-            :to="item.path" 
-            class="nav-item"
-            :class="{ active: $route.path === item.path }"
-          >
-            <el-icon>
-              <component :is="item.icon" />
-            </el-icon>
-            <span>{{ item.title }}</span>
-          </router-link>
-        </nav>
-      </aside>
-
       <!-- 主要内容区域 -->
       <main class="main-content">
         <div class="content-header">
@@ -184,19 +166,19 @@ const handleUserAction = async (command) => {
 
 .header {
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 1000;
   
   .header-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 60px;
+    height: 64px;
   }
   
   .logo {
@@ -207,26 +189,56 @@ const handleUserAction = async (command) => {
     h1 {
       margin: 0;
       color: #409eff;
-      font-size: 20px;
-      font-weight: bold;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
     }
   }
   
   .nav-menu {
     display: flex;
-    gap: 24px;
+    align-items: center;
+    gap: 8px;
+    
+    .divider {
+      width: 1px;
+      height: 24px;
+      background: #e4e7ed;
+      margin: 0 12px;
+    }
     
     .nav-item {
       text-decoration: none;
-      color: #333;
+      color: #606266;
       font-weight: 500;
-      padding: 8px 16px;
-      border-radius: 4px;
-      transition: all 0.3s;
+      font-size: 15px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       
-      &:hover, &.router-link-active {
+      .el-icon {
+        font-size: 16px;
+      }
+      
+      &:hover {
         color: #409eff;
-        background: #f0f8ff;
+        background: rgba(64, 158, 255, 0.1);
+      }
+      
+      &.router-link-active {
+        color: #409eff;
+        background: rgba(64, 158, 255, 0.15);
+        font-weight: 600;
+      }
+      
+      &.user-center-item {
+        &.router-link-active {
+          background: linear-gradient(135deg, rgba(64, 158, 255, 0.2) 0%, rgba(64, 158, 255, 0.1) 100%);
+          box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+        }
       }
     }
   }
@@ -254,83 +266,16 @@ const handleUserAction = async (command) => {
 }
 
 .main-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
-  display: flex;
-  gap: 20px;
-}
-
-.sidebar {
-  width: 280px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  height: fit-content;
-  position: sticky;
-  top: 100px;
-  
-  .sidebar-header {
-    padding: 24px;
-    text-align: center;
-    border-bottom: 1px solid #ebeef5;
-    
-    .user-info {
-      margin-top: 16px;
-      
-      h3 {
-        margin: 0 0 8px 0;
-        color: #303133;
-        font-size: 18px;
-      }
-      
-      .user-email {
-        margin: 0;
-        color: #909399;
-        font-size: 14px;
-      }
-    }
-  }
-  
-  .sidebar-nav {
-    padding: 16px 0;
-    
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 24px;
-      color: #606266;
-      text-decoration: none;
-      transition: all 0.3s;
-      
-      .el-icon {
-        font-size: 18px;
-      }
-      
-      span {
-        font-weight: 500;
-      }
-      
-      &:hover {
-        background: #f0f8ff;
-        color: #409eff;
-      }
-      
-      &.active {
-        background: linear-gradient(90deg, #409eff 0%, rgba(64, 158, 255, 0.1) 100%);
-        color: #409eff;
-        border-right: 3px solid #409eff;
-      }
-    }
-  }
+  padding: 24px;
 }
 
 .main-content {
-  flex: 1;
+  width: 100%;
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   
   .content-header {
@@ -351,32 +296,39 @@ const handleUserAction = async (command) => {
 }
 
 // 响应式设计
-@media (max-width: 768px) {
-  .main-container {
-    flex-direction: column;
-    padding: 16px;
-  }
-  
-  .sidebar {
-    width: 100%;
-    position: static;
-    
-    .sidebar-nav {
-      display: flex;
-      overflow-x: auto;
-      padding: 8px 0;
-      
-      .nav-item {
-        flex-shrink: 0;
-        padding: 8px 16px;
-        white-space: nowrap;
+@media (max-width: 1024px) {
+  .header {
+    .nav-menu {
+      .user-center-item {
+        span {
+          display: none;
+        }
       }
     }
   }
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    padding: 16px;
+  }
   
   .header {
+    .header-container {
+      padding: 0 16px;
+    }
+    
     .nav-menu {
-      display: none;
+      gap: 4px;
+      
+      .nav-item {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+      
+      .divider {
+        margin: 0 4px;
+      }
     }
   }
 }
